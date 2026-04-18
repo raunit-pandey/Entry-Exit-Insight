@@ -244,20 +244,20 @@ st.markdown(
 
         .stApp {
             background:
-                radial-gradient(circle at 14% -10%, rgba(180, 150, 90, 0.08), transparent 34%),
-                radial-gradient(circle at 86% 0%, rgba(100, 120, 140, 0.07), transparent 32%),
-                #141210;
+                radial-gradient(circle at 14% -10%, rgba(148,137,121,0.10), transparent 34%),
+                radial-gradient(circle at 86% 0%, rgba(57,62,70,0.20), transparent 32%),
+                #1e2229;
         }
 
         div[data-testid="stMetric"] {
-            background: linear-gradient(180deg, #2a2824 0%, #1e1c18 100%);
-            border: 1px solid #363230;
-            box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, #323840 0%, #272c34 100%);
+            border: 1px solid #424850;
+            box-shadow: 0 16px 30px rgba(0, 0, 0, 0.50);
         }
 
         .stTextArea textarea {
-            background: #1e1c18;
-            border-color: #333028;
+            background: #272c34;
+            border-color: #3a3f48;
         }
 
         .entryexit-hooray-banner {
@@ -267,8 +267,8 @@ st.markdown(
         }
 
         .entryexit-summary-box {
-            background: #1e1c18;
-            border-color: #2e2c28;
+            background: #272c34;
+            border-color: #3a3f48;
         }
 
         .stButton > button,
@@ -389,8 +389,8 @@ st.markdown(
 
     @media (prefers-color-scheme: dark) {
         .ee-session-col {
-            background: #1e1c1a;
-            border-color: #2e2c28;
+            background: #272c34;
+            border-color: #3a3f48;
         }
     }
     </style>
@@ -604,7 +604,7 @@ def render_team_member_dashboard(
     )
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total On-Floor Time", format_clock(total_work))
+    c1.metric("Total Work Time", format_clock(total_work))
     c2.metric("Total Break Time", format_clock(total_break))
     c3.metric("Total Logged Time", format_clock(total_logged))
     c4.metric("Remaining Work", format_clock(remaining_work) if remaining_work > 0 else "—")
@@ -642,7 +642,7 @@ def render_team_leader_dashboard(
     )
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total On-Floor Time", format_clock(total_work))
+    c1.metric("Total Work (login) Time", format_clock(total_work))
     c2.metric("Total Break Time", format_clock(total_break))
     c3.metric("Total Time", format_clock(total_time))
     c4.metric("Remaining Work", format_clock(remaining_work) if remaining_work > 0 else "—")
@@ -884,16 +884,16 @@ _is_dark = _tm == "dark"
 # ── Botanical SVG wallpaper patterns ─────────────────────────────────────────
 # Dark: deep indigo/violet leaves (like the reference image)
 # Light: soft sage/mint botanical illustration
-DARK_BG_SVG = """url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='50%25' cy='50%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%231c1a18'/%3E%3Cstop offset='100%25' stop-color='%2313120f'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='400' height='400' fill='url(%23bg)'/%3E%3C!-- Charcoal-bronze leaf cluster top-left --%3E%3Cellipse cx='60' cy='80' rx='38' ry='18' fill='%232e2820' opacity='0.9' transform='rotate(-35 60 80)'/%3E%3Cellipse cx='95' cy='55' rx='42' ry='16' fill='%23352e24' opacity='0.8' transform='rotate(-20 95 55)'/%3E%3Cellipse cx='30' cy='120' rx='35' ry='14' fill='%23261f18' opacity='0.95' transform='rotate(-50 30 120)'/%3E%3C!-- Warm slate accent leaves --%3E%3Cellipse cx='155' cy='40' rx='36' ry='13' fill='%23403828' opacity='0.6' transform='rotate(15 155 40)'/%3E%3Cellipse cx='130' cy='90' rx='40' ry='15' fill='%233a3228' opacity='0.65' transform='rotate(-10 130 90)'/%3E%3Cellipse cx='200' cy='25' rx='30' ry='11' fill='%232e2820' opacity='0.55' transform='rotate(25 200 25)'/%3E%3C!-- Cool charcoal leaves right side --%3E%3Cellipse cx='330' cy='70' rx='44' ry='16' fill='%231e2428' opacity='0.8' transform='rotate(20 330 70)'/%3E%3Cellipse cx='370' cy='110' rx='38' ry='14' fill='%23181e22' opacity='0.85' transform='rotate(40 370 110)'/%3E%3Cellipse cx='300' cy='40' rx='32' ry='12' fill='%23222a30' opacity='0.65' transform='rotate(10 300 40)'/%3E%3C!-- Mid section deep charcoal --%3E%3Cellipse cx='80' cy='200' rx='45' ry='17' fill='%232a2420' opacity='0.8' transform='rotate(-25 80 200)'/%3E%3Cellipse cx='50' cy='250' rx='38' ry='14' fill='%232e2820' opacity='0.75' transform='rotate(-45 50 250)'/%3E%3Cellipse cx='350' cy='200' rx='42' ry='16' fill='%231c2228' opacity='0.8' transform='rotate(30 350 200)'/%3E%3C!-- Bottom botanical layer --%3E%3Cellipse cx='100' cy='340' rx='48' ry='18' fill='%23221e18' opacity='0.9' transform='rotate(-30 100 340)'/%3E%3Cellipse cx='160' cy='370' rx='52' ry='19' fill='%232a2420' opacity='0.85' transform='rotate(-15 160 370)'/%3E%3Cellipse cx='240' cy='360' rx='44' ry='16' fill='%23352e24' opacity='0.8' transform='rotate(10 240 360)'/%3E%3Cellipse cx='320' cy='350' rx='46' ry='17' fill='%231e2428' opacity='0.85' transform='rotate(25 320 350)'/%3E%3Cellipse cx='380' cy='380' rx='40' ry='15' fill='%23181e22' opacity='0.9' transform='rotate(40 380 380)'/%3E%3C!-- Subtle warm-gold highlight veins --%3E%3Cellipse cx='60' cy='80' rx='20' ry='4' fill='%23b8924a' opacity='0.12' transform='rotate(-35 60 80)'/%3E%3Cellipse cx='330' cy='70' rx='22' ry='4' fill='%234a6070' opacity='0.12' transform='rotate(20 330 70)'/%3E%3Cellipse cx='155' cy='40' rx='18' ry='3' fill='%23c8a870' opacity='0.10' transform='rotate(15 155 40)'/%3E%3C/svg%3E")"""
+DARK_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%231e2229%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%233a3428%7D.lb%7Bfill%3A%232e2a22%7D.lc%7Bfill%3A%2346403a%7D.v%7Bstroke%3A%236b5f48%3Bstroke-width%3A0.8%3Bfill%3Anone%3Bopacity%3A0.55%7D.v2%7Bstroke%3A%238a7a60%3Bstroke-width%3A0.5%3Bfill%3Anone%3Bopacity%3A0.35%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%235a5040%22%20stroke-width%3D%220.6%22%20opacity%3D%220.5%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.60%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.68%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
 
-LIGHT_BG_SVG = """url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='50%25' cy='50%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23f0faf5'/%3E%3Cstop offset='100%25' stop-color='%23e6f4ec'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='400' height='400' fill='url(%23bg)'/%3E%3C!-- Soft sage leaves top-left --%3E%3Cellipse cx='60' cy='80' rx='38' ry='18' fill='%2386c9a0' opacity='0.35' transform='rotate(-35 60 80)'/%3E%3Cellipse cx='95' cy='55' rx='42' ry='16' fill='%236abf8a' opacity='0.3' transform='rotate(-20 95 55)'/%3E%3Cellipse cx='30' cy='120' rx='35' ry='14' fill='%2399d4ae' opacity='0.4' transform='rotate(-50 30 120)'/%3E%3C!-- Mint accent leaves --%3E%3Cellipse cx='155' cy='40' rx='36' ry='13' fill='%234caf80' opacity='0.25' transform='rotate(15 155 40)'/%3E%3Cellipse cx='130' cy='90' rx='40' ry='15' fill='%2360b890' opacity='0.28' transform='rotate(-10 130 90)'/%3E%3C!-- Warm green right side --%3E%3Cellipse cx='330' cy='70' rx='44' ry='16' fill='%2378c496' opacity='0.32' transform='rotate(20 330 70)'/%3E%3Cellipse cx='370' cy='110' rx='38' ry='14' fill='%2355b07a' opacity='0.35' transform='rotate(40 370 110)'/%3E%3Cellipse cx='300' cy='40' rx='32' ry='12' fill='%2390d4aa' opacity='0.28' transform='rotate(10 300 40)'/%3E%3C!-- Mid section --%3E%3Cellipse cx='80' cy='200' rx='45' ry='17' fill='%2370bc90' opacity='0.3' transform='rotate(-25 80 200)'/%3E%3Cellipse cx='350' cy='200' rx='42' ry='16' fill='%2380c8a0' opacity='0.3' transform='rotate(30 350 200)'/%3E%3C!-- Bottom --%3E%3Cellipse cx='100' cy='340' rx='48' ry='18' fill='%2386c9a0' opacity='0.38' transform='rotate(-30 100 340)'/%3E%3Cellipse cx='180' cy='370' rx='52' ry='19' fill='%236abf8a' opacity='0.32' transform='rotate(-15 180 370)'/%3E%3Cellipse cx='280' cy='355' rx='44' ry='16' fill='%2378c496' opacity='0.35' transform='rotate(10 280 355)'/%3E%3Cellipse cx='370' cy='375' rx='40' ry='15' fill='%2355b07a' opacity='0.38' transform='rotate(30 370 375)'/%3E%3C!-- Leaf veins subtle --%3E%3Cellipse cx='60' cy='80' rx='20' ry='3' fill='%2334a068' opacity='0.18' transform='rotate(-35 60 80)'/%3E%3Cellipse cx='330' cy='70' rx='22' ry='3' fill='%2334a068' opacity='0.15' transform='rotate(20 330 70)'/%3E%3C/svg%3E")"""
+LIGHT_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%23eef7f2%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%236abf8a%7D.lb%7Bfill%3A%2386c9a0%7D.lc%7Bfill%3A%234caf78%7D.v%7Bstroke%3A%232d8a58%3Bstroke-width%3A0.8%3Bfill%3Anone%3Bopacity%3A0.38%7D.v2%7Bstroke%3A%233aaa6a%3Bstroke-width%3A0.5%3Bfill%3Anone%3Bopacity%3A0.26%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%233a9060%22%20stroke-width%3D%220.6%22%20opacity%3D%220.26%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.31%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.35%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
 
 THEME_CSS = f"""
 <style>
 /* ── Wallpaper background ───────────────────────────────────────── */
 .stApp {{
     background-image: {DARK_BG_SVG if _is_dark else LIGHT_BG_SVG} !important;
-    background-size: 400px 400px !important;
+    background-size: 600px 600px !important;
     background-repeat: repeat !important;
     background-attachment: fixed !important;
 }}
@@ -903,7 +903,7 @@ THEME_CSS = f"""
     content: "";
     position: fixed;
     inset: 0;
-    background: {"rgba(16,14,12,0.72)" if _is_dark else "rgba(240,250,245,0.78)"};
+    background: {"rgba(20,22,28,0.62)" if _is_dark else "rgba(240,250,245,0.78)"};
     pointer-events: none;
     z-index: 0;
 }}
@@ -945,9 +945,9 @@ div[data-testid="stMetricValue"] span {{
 
 /* ── Metric cards ───────────────────────────────────────────────── */
 div[data-testid="stMetric"] {{
-    background: {"linear-gradient(160deg,rgba(44,42,38,0.90) 0%,rgba(32,30,26,0.94) 100%)" if _is_dark else "linear-gradient(160deg,rgba(255,255,255,0.82) 0%,rgba(230,250,238,0.88) 100%)"} !important;
-    border: {"1px solid rgba(160,145,120,0.28)" if _is_dark else "1px solid rgba(80,170,110,0.45)"} !important;
-    box-shadow: {"0 8px 32px rgba(0,0,0,0.60),inset 0 1px 0 rgba(200,180,140,0.08)" if _is_dark else "0 8px 24px rgba(60,140,80,0.12),inset 0 1px 0 rgba(255,255,255,0.8)"} !important;
+    background: {"linear-gradient(160deg,rgba(57,62,70,0.92) 0%,rgba(38,43,52,0.96) 100%)" if _is_dark else "linear-gradient(160deg,rgba(255,255,255,0.82) 0%,rgba(230,250,238,0.88) 100%)"} !important;
+    border: {"1px solid rgba(148,137,121,0.30)" if _is_dark else "1px solid rgba(80,170,110,0.45)"} !important;
+    box-shadow: {"0 8px 32px rgba(0,0,0,0.55),inset 0 1px 0 rgba(223,208,184,0.08)" if _is_dark else "0 8px 24px rgba(60,140,80,0.12),inset 0 1px 0 rgba(255,255,255,0.8)"} !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border-radius: 16px !important;
@@ -959,8 +959,8 @@ div[data-testid="stMetric"]::before {{
 
 /* ── Text areas ─────────────────────────────────────────────────── */
 .stTextArea textarea {{
-    background: {"rgba(30,28,24,0.88)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
-    border: {"1px solid rgba(150,135,110,0.30)" if _is_dark else "1px solid rgba(80,170,110,0.4)"} !important;
+    background: {"rgba(38,43,52,0.90)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
+    border: {"1px solid rgba(148,137,121,0.28)" if _is_dark else "1px solid rgba(80,170,110,0.4)"} !important;
     color: {"#e8d8c0" if _is_dark else "#12200e"} !important;
     backdrop-filter: blur(8px) !important;
     border-radius: 12px !important;
@@ -972,8 +972,8 @@ div[data-testid="stMetric"]::before {{
 
 /* ── Summary & session boxes ────────────────────────────────────── */
 .entryexit-summary-box {{
-    background: {"rgba(30,28,24,0.88)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
-    border-color: {"rgba(150,135,110,0.24)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
+    background: {"rgba(38,43,52,0.90)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
+    border-color: {"rgba(148,137,121,0.25)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
     backdrop-filter: blur(10px) !important;
     color: {"#e0d0b8" if _is_dark else "#1e3a28"} !important;
 }}
@@ -983,8 +983,8 @@ div[data-testid="stMetric"]::before {{
 }}
 
 .ee-session-col {{
-    background: {"rgba(30,28,24,0.88)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
-    border-color: {"rgba(140,128,108,0.30)" if _is_dark else "rgba(80,170,110,0.35)"} !important;
+    background: {"rgba(38,43,52,0.90)" if _is_dark else "rgba(240,252,245,0.85)"} !important;
+    border-color: {"rgba(148,137,121,0.25)" if _is_dark else "rgba(80,170,110,0.35)"} !important;
     backdrop-filter: blur(10px) !important;
 }}
 
@@ -993,14 +993,40 @@ div[data-testid="stMetric"]::before {{
 }}
 
 /* ── Tabs ───────────────────────────────────────────────────────── */
+[data-testid="stTabs"] [role="tablist"] {{
+    gap: 4px !important;
+    border-bottom: {"1px solid rgba(212,175,114,0.20)" if _is_dark else "1px solid rgba(60,140,80,0.18)"} !important;
+    background: transparent !important;
+}}
+
 [data-testid="stTabs"] [role="tab"] {{
-    color: {"#c8a870" if _is_dark else "#2e7a42"} !important;
-    font-weight: 600 !important;
+    color: {"rgba(180,155,110,0.45)" if _is_dark else "rgba(60,120,75,0.40)"} !important;
+    font-weight: 700 !important;
+    font-size: 0.93rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    padding: 0.55rem 1.4rem !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: color 0.20s ease, background 0.20s ease, box-shadow 0.20s ease !important;
+}}
+
+[data-testid="stTabs"] [role="tab"]:hover {{
+    color: {"rgba(212,175,114,0.90)" if _is_dark else "rgba(30,100,50,0.90)"} !important;
+    background: {"rgba(212,175,114,0.06)" if _is_dark else "rgba(60,140,80,0.06)"} !important;
+    box-shadow: none !important;
+    border: none !important;
 }}
 
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
-    color: {"#d4af72" if _is_dark else "#14532d"} !important;
-    border-bottom-color: {"#d4af72" if _is_dark else "#14532d"} !important;
+    color: {"#e8c96a" if _is_dark else "#0f3d1f"} !important;
+    background: {"rgba(212,175,114,0.09)" if _is_dark else "rgba(60,140,80,0.08)"} !important;
+    border: none !important;
+    border-bottom: {"2px solid #d4af72" if _is_dark else "2px solid #14532d"} !important;
+    box-shadow: {"inset 0 2px 8px rgba(212,175,114,0.10)" if _is_dark else "inset 0 2px 8px rgba(60,140,80,0.08)"} !important;
+    text-shadow: {"0 0 16px rgba(212,175,114,0.45)" if _is_dark else "none"} !important;
 }}
 
 /* ── Radio & other form elements ────────────────────────────────── */
@@ -1010,8 +1036,8 @@ div[data-testid="stMetric"]::before {{
 
 /* ── Alerts / info boxes ────────────────────────────────────────── */
 div[data-testid="stAlert"] {{
-    background: {"rgba(30,28,22,0.90)" if _is_dark else "rgba(230,250,238,0.85)"} !important;
-    border-color: {"rgba(160,145,110,0.32)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
+    background: {"rgba(38,43,52,0.92)" if _is_dark else "rgba(230,250,238,0.85)"} !important;
+    border-color: {"rgba(148,137,121,0.30)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
     backdrop-filter: blur(10px) !important;
     color: {"#e0d0b8" if _is_dark else "#1e3a28"} !important;
 }}
@@ -1042,6 +1068,21 @@ div[data-testid="stAlert"] p, div[data-testid="stAlert"] span {{
 /* ── Divider ────────────────────────────────────────────────────── */
 hr {{
     border-color: {"rgba(180,140,80,0.28)" if _is_dark else "rgba(80,170,110,0.3)"} !important;
+}}
+
+/* ── Tooltip ─────────────────────────────────────────────────────── */
+div[data-testid="tooltipHoverTarget"] + div,
+[data-testid="stTooltipContent"],
+div[role="tooltip"],
+.stTooltipContent {{
+    background: {"#2a2f3a" if _is_dark else "#ffffff"} !important;
+    color: {"#e0d0b8" if _is_dark else "#1a1308"} !important;
+    border: {"1px solid rgba(212,175,114,0.30)" if _is_dark else "1px solid rgba(0,0,0,0.10)"} !important;
+    border-radius: 8px !important;
+    box-shadow: {"0 4px 20px rgba(0,0,0,0.6)" if _is_dark else "0 4px 16px rgba(0,0,0,0.12)"} !important;
+}}
+div[role="tooltip"] *, [data-testid="stTooltipContent"] * {{
+    color: {"#e0d0b8" if _is_dark else "#1a1308"} !important;
 }}
 </style>
 """
@@ -1152,7 +1193,7 @@ st.caption(
 st.caption(f"Pune time (IST): {now_pune().strftime('%d-%b-%Y %I:%M:%S %p')}")
 
 st.markdown("**Biometric log**")
-tab_member_in, tab_leader_in = st.tabs(["Team Member", "Team Leader"])
+tab_member_in, tab_leader_in = st.tabs(["👤  Team Member", "👑  Team Leader"])
 
 with tab_member_in:
     st.radio(
