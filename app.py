@@ -827,7 +827,7 @@ if "leader_session_panel_open" not in st.session_state:
     st.session_state.leader_session_panel_open = False
 
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "dark"
+    st.session_state.theme_mode = "light"
 
 
 # ── Page layout ───────────────────────────────────────────────────────────────
