@@ -636,7 +636,7 @@ def render_team_leader_dashboard(
     remaining_break = max(MEMBER_BREAK_TARGET - total_break, 0)
 
     st.caption(
-        f"👤 Team Leader · {day_type} · "
+        f"👑 Team Leader · {day_type} · "
         f"Clocked in at {first_entry.strftime('%I:%M %p').lstrip('0')} on {first_entry.strftime('%d %b %Y')} · "
         f"Earliest logout at {format_logout_at_display(first_entry, deadline)}"
     )
