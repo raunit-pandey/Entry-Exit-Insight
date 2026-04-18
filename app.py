@@ -588,14 +588,14 @@ def render_team_member_dashboard(
     first_entry: dt.datetime,
     now: dt.datetime,
 ) -> None:
-    """Team Member: earliest logout = first punch + Full/Half minimum duration."""
-    min_td = min_duration_from_first_entry(day_type, role="member")
-    deadline = first_entry + min_td
-    remaining_break = max(MEMBER_BREAK_TARGET - result["total_break"], 0)
-
+    """Team Member: logout when net work time (excluding breaks) >= threshold."""
+    required_work_secs = member_threshold_seconds(day_type)
     total_work = result["total_work"] + result["ongoing_work"]
     total_break = result["total_break"]
     total_logged = total_work + total_break
+    remaining_work = max(required_work_secs - total_work, 0)
+    deadline = now + dt.timedelta(seconds=remaining_work)
+    remaining_break = max(MEMBER_BREAK_TARGET - total_break, 0)
 
     st.caption(
         f"👤 Team Member · {day_type} · "
@@ -604,14 +604,10 @@ def render_team_member_dashboard(
     )
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total Work Time", format_clock(total_work))
+    c1.metric("Total On-Floor Time", format_clock(total_work))
     c2.metric("Total Break Time", format_clock(total_break))
     c3.metric("Total Logged Time", format_clock(total_logged))
-    if now < deadline:
-        secs_left = max(int((deadline - now).total_seconds()), 0)
-        c4.metric("Remaining Work", format_clock(secs_left))
-    else:
-        c4.metric("Remaining Work", "—")
+    c4.metric("Remaining Work", format_clock(remaining_work) if remaining_work > 0 else "—")
     c5.metric("Remaining Break", format_clock(remaining_break) if remaining_break > 0 else "—")
 
     if result["ongoing_work_text"]:
@@ -630,14 +626,14 @@ def render_team_leader_dashboard(
     first_entry: dt.datetime,
     now: dt.datetime,
 ) -> None:
-    """Team Leader: earliest logout = first punch + Full/Half minimum duration."""
-    min_td = min_duration_from_first_entry(day_type, role="leader")
-    deadline = first_entry + min_td
-    remaining_break = max(MEMBER_BREAK_TARGET - result["total_break"], 0)
-
+    """Team Leader: logout when net work time (excluding breaks) >= threshold."""
+    required_work_secs = leader_threshold_seconds(day_type)
     total_work = result["total_work"] + result["ongoing_work"]
     total_break = result["total_break"]
     total_time = total_work + total_break
+    remaining_work = max(required_work_secs - total_work, 0)
+    deadline = now + dt.timedelta(seconds=remaining_work)
+    remaining_break = max(MEMBER_BREAK_TARGET - total_break, 0)
 
     st.caption(
         f"👤 Team Leader · {day_type} · "
@@ -646,14 +642,10 @@ def render_team_leader_dashboard(
     )
 
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total Work (login) Time", format_clock(total_work))
+    c1.metric("Total On-Floor Time", format_clock(total_work))
     c2.metric("Total Break Time", format_clock(total_break))
     c3.metric("Total Time", format_clock(total_time))
-    if now < deadline:
-        secs_left = max(int((deadline - now).total_seconds()), 0)
-        c4.metric("Remaining Work", format_clock(secs_left))
-    else:
-        c4.metric("Remaining Work", "—")
+    c4.metric("Remaining Work", format_clock(remaining_work) if remaining_work > 0 else "—")
     c5.metric("Remaining Break", format_clock(remaining_break) if remaining_break > 0 else "—")
 
     if result["ongoing_work_text"]:
@@ -1172,14 +1164,16 @@ with tab_member_in:
         horizontal=True,
         help="Min logout time: Full Day = 7h 30m | Half Day = 4h 30m",
     )
-    st.text_area(
-        "Team Member biometric log paste",
-        height=170,
-        label_visibility="collapsed",
-        placeholder="Biometric.\n01:55\nBiometric.\n01:56\nBiometric.\n01:58\n...",
-        key=MEMBER_PASTE_WIDGET_KEY,
-    )
-    if st.button("Calculate Times", use_container_width=True, key="btn_member_calc"):
+    with st.form(key="member_calc_form", clear_on_submit=False):
+        st.text_area(
+            "Team Member biometric log paste",
+            height=170,
+            label_visibility="collapsed",
+            placeholder="Biometric.\n01:55\nBiometric.\n01:56\nBiometric.\n01:58\n...",
+            key=MEMBER_PASTE_WIDGET_KEY,
+        )
+        member_submitted = st.form_submit_button("Calculate Times", use_container_width=True)
+    if member_submitted:
         raw = normalize_paste_text(st.session_state.get(MEMBER_PASTE_WIDGET_KEY, ""))
         parsed = fresh_parse_biometric_log(raw)
         if parsed is None:
@@ -1201,14 +1195,16 @@ with tab_leader_in:
         horizontal=True,
         help="Min login time: Full Day = 7h 00m | Half Day = 4h 00m",
     )
-    st.text_area(
-        "Team Leader biometric log paste",
-        height=170,
-        label_visibility="collapsed",
-        placeholder="Biometric.\n01:55\nBiometric.\n01:56\nBiometric.\n01:58\n...",
-        key=LEADER_PASTE_WIDGET_KEY,
-    )
-    if st.button("Calculate Times", use_container_width=True, key="btn_leader_calc"):
+    with st.form(key="leader_calc_form", clear_on_submit=False):
+        st.text_area(
+            "Team Leader biometric log paste",
+            height=170,
+            label_visibility="collapsed",
+            placeholder="Biometric.\n01:55\nBiometric.\n01:56\nBiometric.\n01:58\n...",
+            key=LEADER_PASTE_WIDGET_KEY,
+        )
+        leader_submitted = st.form_submit_button("Calculate Times", use_container_width=True)
+    if leader_submitted:
         raw = normalize_paste_text(st.session_state.get(LEADER_PASTE_WIDGET_KEY, ""))
         parsed = fresh_parse_biometric_log(raw)
         if parsed is None:
@@ -1256,7 +1252,7 @@ if "feedback_saved" not in st.session_state:
 
 # Show success banner BEFORE text area (persists after rerun)
 if st.session_state.feedback_saved:
-    st.success("✅ Thank you for your valuable feedback!! we’re actively working to turn it into an even better experience for you.")
+    st.success("🙏 Your feedback means the world to us — we'll pour our heart into making it happen. Thank you for helping us grow! 💛")
     st.session_state.feedback_saved = False
 
 with st.form(key="feedback_form", clear_on_submit=True):
@@ -1264,7 +1260,8 @@ with st.form(key="feedback_form", clear_on_submit=True):
         "Share your feedback",
         label_visibility="collapsed",
         placeholder=(
-            "Want a new feature? Share it in the feedback form and include your name/email so our team can notify you once it’s implemented."
+            "If you want any additional feature on this website, "
+            "give it up in feedback."
         ),
         height=100,
     )
