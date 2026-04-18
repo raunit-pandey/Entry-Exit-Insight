@@ -1252,7 +1252,7 @@ if "feedback_saved" not in st.session_state:
 
 # Show success banner BEFORE text area (persists after rerun)
 if st.session_state.feedback_saved:
-    st.success("🙏 Your feedback means the world to us — we'll pour our heart into making it happen. Thank you for helping us grow! 💛")
+    st.success("❤️ Thank you for your valuable feedback!! we’re actively working to turn it into an even better experience for you")
     st.session_state.feedback_saved = False
 
 with st.form(key="feedback_form", clear_on_submit=True):
