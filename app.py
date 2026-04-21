@@ -701,7 +701,7 @@ def extract_times(log_text: str) -> list[dt.datetime]:
     return points
 
 
-@st.cache_data(ttl=0, show_spinner=False)
+@st.cache_data(show_spinner=False)
 def normalize_paste_text(raw: str) -> str:
     return (raw or "").replace("\r\n", "\n")
 
@@ -817,9 +817,7 @@ def leader_live_dashboard() -> None:
 
 # ── Initialise session state ───────────────────────────────────────────────────
 
-if "_entryexit_cleared_caches" not in st.session_state:
-    st.cache_data.clear()
-    st.session_state._entryexit_cleared_caches = True
+
 
 if "member_day_type" not in st.session_state:
     mq = st.query_params.get(MEMBER_DAY_QUERY)
@@ -1293,7 +1291,7 @@ def render_signup_page() -> None:
                 margin-top:0.8rem;
             ">
                 Your details are only used to identify registered users.<br>
-                No passwords/OTP are required.
+                No passwords are stored.
             </p>
             """,
             unsafe_allow_html=True,
@@ -1524,7 +1522,7 @@ with st.form(key="feedback_form", clear_on_submit=True):
         "Share your feedback",
         label_visibility="collapsed",
         placeholder=(
-            "Want a new feature? Share it in the feedback form, our team will notify you once it’s implemented."
+            "Want a new feature? Share it in the feedback form and include your Name/Email so our team can notify you once it’s implemented."
         ),
         height=100,
     )
