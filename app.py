@@ -1565,7 +1565,7 @@ with st.form(key="feedback_form", clear_on_submit=True):
         "Share your feedback",
         label_visibility="collapsed",
         placeholder=(
-            "Want a new feature? Share it in the feedback form and include your Name/Email so our team can notify you once it’s implemented."
+            "Want a new feature? Share it in the feedback form, so our team will notify you once it’s implemented."
         ),
         height=100,
     )
