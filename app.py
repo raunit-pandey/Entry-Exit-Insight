@@ -21,7 +21,7 @@ LEADER_DAY_QUERY = "leader_day"
 
 
 def now_pune() -> dt.datetime:
-    return dt.datetime.now(PUNE_TZ).replace(tzinfo=None)
+    return dt.datetime.now(PUNE_TZ).replace(tzinfo=None, microsecond=0)
 
 
 st.set_page_config(
@@ -741,7 +741,7 @@ def summarize_sessions(
     for idx in range(len(time_points) - 1):
         start_dt = time_points[idx]
         end_dt = time_points[idx + 1]
-        seconds = int((end_dt - start_dt).total_seconds())
+        seconds = round((end_dt - start_dt).total_seconds())
         session_text = (
             f"{start_dt.strftime('%Y-%m-%d %H:%M')} -> "
             f"{end_dt.strftime('%Y-%m-%d %H:%M')} - {format_short(seconds)}"
@@ -766,7 +766,7 @@ def summarize_sessions(
         current_time = current_time or now_pune()
         if current_time < time_points[-1]:
             current_time += dt.timedelta(days=1)
-        ongoing_work = int((current_time - time_points[-1]).total_seconds())
+        ongoing_work = round((current_time - time_points[-1]).total_seconds())
         ongoing_work_text = (
             f"{time_points[-1].strftime('%Y-%m-%d %H:%M')} -> "
             f"{current_time.strftime('%Y-%m-%d %H:%M')} - {format_short(ongoing_work)} "
