@@ -1,10 +1,10 @@
+import base64
 import datetime as dt
 from pathlib import Path
 import re
 from zoneinfo import ZoneInfo
 
 import streamlit as st
-from streamlit_cookies_controller import CookieController
 
 BASE_DIR = Path(__file__).resolve().parent
 ICON_PATH = BASE_DIR / "Icon.png"
@@ -30,17 +30,23 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Cookie controller (must be initialised before any other st calls) ─────────
-cookies = CookieController()
+# ── Signup state — restore from query param on every load ────────────────────
+def _decode_user_param(val: str) -> str:
+    try:
+        return base64.urlsafe_b64decode(val.encode()).decode()
+    except Exception:
+        return ""
 
-# Restore signup state from cookie on every page load / refresh
 if "signup_done" not in st.session_state:
-    _c_name  = cookies.get("ee_user_name") or ""
-    _c_email = cookies.get("ee_user_email") or ""
-    if _c_name and _c_email and "@" in _c_email:
-        st.session_state.signup_done      = True
-        st.session_state.signup_user_name = _c_name
-    else:
+    _qp_u = st.query_params.get("u", "")
+    if _qp_u:
+        _decoded = _decode_user_param(_qp_u)          # "Name||email"
+        if "||" in _decoded:
+            _qp_name, _qp_email = _decoded.split("||", 1)
+            if _qp_email and "@" in _qp_email:
+                st.session_state.signup_done      = True
+                st.session_state.signup_user_name = _qp_name
+    if "signup_done" not in st.session_state:
         st.session_state.signup_done = False
 
 st.markdown(
@@ -685,15 +691,22 @@ def render_team_leader_dashboard(
 
 def extract_times(log_text: str) -> list[dt.datetime]:
     matches = re.findall(r"\b(?:[01]?\d|2[0-3]):[0-5]\d\b", log_text)
-    current_day = now_pune().date()
+    now = now_pune()
+    current_day = now.date()
     points: list[dt.datetime] = []
     last_dt = None
 
-    for item in matches:
+    for i, item in enumerate(matches):
         hh, mm = map(int, item.split(":"))
         candidate = dt.datetime.combine(current_day, dt.time(hh, mm))
         if last_dt and candidate < last_dt:
+            # sequence rolled over midnight — advance day
             current_day += dt.timedelta(days=1)
+            candidate = dt.datetime.combine(current_day, dt.time(hh, mm))
+        # First punch: if it lands in the future (e.g. 12:00 but now is 05:54)
+        # it belongs to yesterday
+        if i == 0 and candidate > now:
+            current_day -= dt.timedelta(days=1)
             candidate = dt.datetime.combine(current_day, dt.time(hh, mm))
         points.append(candidate)
         last_dt = candidate
@@ -1186,6 +1199,12 @@ def submit_signup_to_sheets(full_name: str, email: str) -> bool:
         return False
 
 
+def _set_user_param(name: str, email: str) -> None:
+    """Encode name+email into URL query param so it persists on refresh/bookmark."""
+    encoded = base64.urlsafe_b64encode(f"{name}||{email}".encode()).decode()
+    st.query_params["u"] = encoded
+
+
 def render_signup_page() -> None:
     """Full-page signup gate rendered before the main app."""
     _tm = st.session_state.theme_mode
@@ -1236,6 +1255,35 @@ def render_signup_page() -> None:
         if "signup_error" not in st.session_state:
             st.session_state.signup_error = ""
 
+        # Returning user fast path — just email
+        with st.form(key="returning_form", clear_on_submit=False):
+            ret_email = st.text_input(
+                "Already registered? Enter your email to continue",
+                placeholder="e.g. ravi.kumar@company.com",
+                key="_ret_email",
+            )
+            ret_submitted = st.form_submit_button(
+                "Continue →", use_container_width=True
+            )
+
+        if ret_submitted:
+            ret_email_clean = (ret_email or "").strip().lower()
+            if not ret_email_clean or "@" not in ret_email_clean:
+                st.warning("Please enter a valid email.")
+            else:
+                with st.spinner("Checking…"):
+                    existing = check_existing_signup(ret_email_clean)
+                if existing:
+                    st.session_state.signup_done = True
+                    st.session_state.signup_user_name = existing.get("Full Name", "")
+                    _set_user_param(existing.get("Full Name", ""), ret_email_clean)
+                    st.rerun()
+                else:
+                    st.warning("Email not found. Please register below.")
+
+        st.markdown("<div style='text-align:center;opacity:0.4;font-size:0.8rem;margin:0.5rem 0'>── or register ──</div>", unsafe_allow_html=True)
+
+        # New user registration
         with st.form(key="signup_form", clear_on_submit=False):
             full_name = st.text_input(
                 "Full Name",
@@ -1255,7 +1303,6 @@ def render_signup_page() -> None:
             name_clean = (full_name or "").strip()
             email_clean = (email or "").strip().lower()
 
-            # Basic validation
             if not name_clean:
                 st.warning("Please enter your full name.")
             elif not email_clean:
@@ -1265,12 +1312,9 @@ def render_signup_page() -> None:
             else:
                 with st.spinner("Checking registration…"):
                     existing = check_existing_signup(email_clean)
-
                 if existing:
                     st.session_state.signup_done = True
                     st.session_state.signup_user_name = existing.get("Full Name", name_clean)
-                    cookies.set("ee_user_name",  existing.get("Full Name", name_clean))
-                    cookies.set("ee_user_email", email_clean)
                     st.rerun()
                 else:
                     with st.spinner("Registering…"):
@@ -1278,8 +1322,7 @@ def render_signup_page() -> None:
                     if ok:
                         st.session_state.signup_done = True
                         st.session_state.signup_user_name = name_clean
-                        cookies.set("ee_user_name",  name_clean)
-                        cookies.set("ee_user_email", email_clean)
+                        _set_user_param(name_clean, email_clean)
                         st.rerun()
 
         st.markdown(
@@ -1291,7 +1334,7 @@ def render_signup_page() -> None:
                 margin-top:0.8rem;
             ">
                 Your details are only used to identify registered users.<br>
-                No passwords are stored.
+                No passwords/OTP are required.
             </p>
             """,
             unsafe_allow_html=True,
