@@ -1765,14 +1765,12 @@ with hdr_icon:
     st.markdown(CLOCK_SVG, unsafe_allow_html=True)
 
 with hdr_title:
-    # Use st.components to bypass Streamlit's HTML sanitizer entirely
-    import streamlit.components.v1 as _components
-    _components.html(
+    st.markdown(
         '<div style="font-family:Georgia,serif;font-size:1.85rem;font-weight:700;'
         'color:#f5e6c8;margin:0;letter-spacing:-0.01em;line-height:1.0;'
         'text-shadow:0 2px 8px rgba(0,0,0,0.8);">'
         'EntryExit Insight</div>',
-        height=50,
+        unsafe_allow_html=True,
     )
 
 with hdr_toggle:
