@@ -69,7 +69,7 @@ st.markdown(
     }
 
     h1, h2, h3 {
-        color: var(--text-color) !important;
+        color: #000000 !important;
         letter-spacing: 0.3px;
         font-weight: 700;
         text-wrap: balance;
@@ -82,7 +82,26 @@ st.markdown(
     }
 
     p, label, .stCaption {
-        color: color-mix(in srgb, var(--text-color) 70%, transparent) !important;
+        color: #000000 !important;
+    }
+
+    /* High-specificity light mode text fix */
+    .stApp p,
+    .stApp label,
+    .stApp span,
+    .stApp div,
+    .stApp .stCaption,
+    .stApp .stMarkdown,
+    .stApp [data-testid="stMarkdownContainer"] p,
+    .stApp [data-testid="stMarkdownContainer"] span,
+    .stApp [data-testid="stMarkdownContainer"] div,
+    .stApp [data-testid="stMarkdownContainer"] strong,
+    .stApp [data-testid="stMarkdownContainer"] b,
+    .stApp [data-testid="stCaptionContainer"] p,
+    .stApp [data-testid="stRadio"] label,
+    .stApp [data-testid="stRadio"] span,
+    .stApp [data-testid="stTabs"] [role="tab"] {
+        color: #000000 !important;
     }
 
     div[data-testid="stMetric"] {
@@ -114,7 +133,7 @@ st.markdown(
     }
 
     div[data-testid="stMetricValue"] {
-        color: var(--text-color) !important;
+        color: #000000 !important;
         font-weight: 700 !important;
     }
 
@@ -122,7 +141,7 @@ st.markdown(
         border: 1px solid color-mix(in srgb, var(--accent-gold) 22%, var(--text-color));
         border-radius: 12px;
         background: var(--secondary-background-color);
-        color: var(--text-color);
+        color: #000000;
         box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
     }
 
@@ -145,7 +164,7 @@ st.markdown(
         pointer-events: none !important;
         cursor: default !important;
         text-decoration: none !important;
-        color: inherit !important;
+        color: #000000 !important;
     }
 
     /* Hide Streamlit anchor link icons */
@@ -186,7 +205,7 @@ st.markdown(
     }
 
     .stMarkdown, .stText {
-        color: var(--text-color);
+        color: #000000;
     }
 
     hr {
@@ -198,7 +217,7 @@ st.markdown(
         pointer-events: none !important;
         cursor: default !important;
         text-decoration: none !important;
-        color: inherit !important;
+        color: #000000 !important;
     }
 
     div[data-testid="stAlert"] {
@@ -303,6 +322,27 @@ st.markdown(
         }
         .stApp .stButton > button {
             color: #000000 !important;
+        }
+
+        /* ── Fix: all text white in dark mode ── */
+        .stApp p,
+        .stApp label,
+        .stApp span,
+        .stApp div,
+        .stApp .stCaption,
+        .stApp .stMarkdown,
+        .stApp [data-testid="stCaptionContainer"] p,
+        .stApp [data-testid="stMarkdownContainer"] p,
+        .stApp [data-testid="stMarkdownContainer"] span,
+        .stApp [data-testid="stMarkdownContainer"] div,
+        .stApp [data-testid="stMarkdownContainer"] strong,
+        .stApp [data-testid="stMarkdownContainer"] b,
+        .stApp [data-testid="stRadio"] label,
+        .stApp [data-testid="stRadio"] span,
+        .stApp [data-testid="stTabs"] [role="tab"],
+        .stApp h1, .stApp h2, .stApp h3,
+        .stApp h4, .stApp h5, .stApp h6 {
+            color: #ffffff !important;
         }
     }
 
@@ -804,7 +844,11 @@ def persist_leader_day_query() -> None:
     st.query_params[LEADER_DAY_QUERY] = st.session_state.leader_day_type
 
 
-# ── Live dashboard fragments (auto-refresh every 1s) ──────────────────────────
+# ── Live dashboard fragments (auto-refresh every 30s) ─────────────────────────
+# Biometric punches are minute-resolution only, so refreshing every 30s is
+# sufficient — no new information changes faster than once per minute, and
+# sub-minute drift was causing the displayed timer to visually race past
+# pay-threshold boundaries (e.g. half-day cutoff) before they were truly reached.
 
 @st.fragment(run_every="1s")
 def member_live_dashboard() -> None:
@@ -953,20 +997,59 @@ html, body {{
 }}
 
 h1, h2, h3, h4, h5, h6 {{
-    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
-    text-shadow: {"0 1px 8px rgba(0,0,0,0.6)" if _is_dark else "none"} !important;
+    color: {"#f5e6c8" if _is_dark else "#12200e"} !important;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.55) !important;
 }}
 
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3 {{
+    color: {"#f5e6c8" if _is_dark else "#12200e"} !important;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.55) !important;
+}}
+
+/* General body text — broad but high-specificity */
 p, span, div, label, .stMarkdown,
 .stCaption, [data-testid="stCaptionContainer"] {{
     color: {"#d8ccb8" if _is_dark else "#1e3a28"} !important;
+}}
+
+/* Streamlit markdown containers — all text inside */
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span,
+[data-testid="stMarkdownContainer"] div,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMarkdownContainer"] b,
+[data-testid="stMarkdownContainer"] em {{
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
+}}
+
+/* Caption text */
+[data-testid="stCaptionContainer"] p,
+[data-testid="stCaptionContainer"] span {{
+    color: {"#d4c4a8" if _is_dark else "#12200e"} !important;
+}}
+
+/* Bold/strong text in markdown */
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMarkdownContainer"] b {{
+    color: {"#faf0d8" if _is_dark else "#0a1a0e"} !important;
+}}
+
+/* Welcome line, Biometric log label, all stText */
+.stText, .stText p,
+[data-testid="stText"],
+[data-testid="stText"] p {{
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
 }}
 
 /* Metric labels & values */
 div[data-testid="stMetricLabel"] > div,
 div[data-testid="stMetricLabel"] label,
 div[data-testid="stMetricLabel"] span {{
-    color: {"#b0a090" if _is_dark else "#3a5a42"} !important;
+    color: {"#cfc0a0" if _is_dark else "#3a5a42"} !important;
     font-size: 0.78rem !important;
 }}
 
@@ -993,15 +1076,17 @@ div[data-testid="stMetric"]::before {{
 
 /* ── Text areas ─────────────────────────────────────────────────── */
 .stTextArea textarea {{
-    background: {"rgba(60,55,48,0.90)" if _is_dark else "rgba(246,244,232,0.85)"} !important;
-    border: {"1px solid rgba(148,137,121,0.28)" if _is_dark else "1px solid rgba(80,170,110,0.4)"} !important;
-    color: {"#e8d8c0" if _is_dark else "#12200e"} !important;
+    background: {"rgba(50,46,40,0.95)" if _is_dark else "rgba(246,244,232,0.92)"} !important;
+    border: {"1px solid rgba(180,165,135,0.45)" if _is_dark else "1px solid rgba(80,170,110,0.4)"} !important;
+    color: {"#f5ead8" if _is_dark else "#12200e"} !important;
     backdrop-filter: blur(8px) !important;
     border-radius: 12px !important;
+    font-size: 0.9rem !important;
 }}
 
 .stTextArea textarea::placeholder {{
-    color: {"rgba(180,160,130,0.55)" if _is_dark else "rgba(40,100,55,0.45)"} !important;
+    color: {"rgba(220,200,165,0.70)" if _is_dark else "rgba(20,80,40,0.55)"} !important;
+    font-style: italic !important;
 }}
 
 /* ── Summary & session boxes ────────────────────────────────────── */
@@ -1009,11 +1094,11 @@ div[data-testid="stMetric"]::before {{
     background: {"rgba(60,55,48,0.90)" if _is_dark else "rgba(246,244,232,0.85)"} !important;
     border-color: {"rgba(148,137,121,0.25)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
     backdrop-filter: blur(10px) !important;
-    color: {"#e0d0b8" if _is_dark else "#1e3a28"} !important;
+    color: {"#f0e0c8" if _is_dark else "#12200e"} !important;
 }}
 
 .entryexit-summary-box b {{
-    color: {"#f0e0c0" if _is_dark else "#12200e"} !important;
+    color: {"#faf0d8" if _is_dark else "#0a1a0e"} !important;
 }}
 
 .ee-session-col {{
@@ -1023,7 +1108,7 @@ div[data-testid="stMetric"]::before {{
 }}
 
 .ee-row-label, .ee-row-range {{
-    color: {"rgba(200,185,155,0.75)" if _is_dark else "rgba(30,60,35,0.7)"} !important;
+    color: {"rgba(230,210,175,0.90)" if _is_dark else "rgba(15,50,25,0.85)"} !important;
 }}
 
 /* ── Tabs ───────────────────────────────────────────────────────── */
@@ -1034,7 +1119,7 @@ div[data-testid="stMetric"]::before {{
 }}
 
 [data-testid="stTabs"] [role="tab"] {{
-    color: {"rgba(180,155,110,0.45)" if _is_dark else "rgba(60,120,75,0.40)"} !important;
+    color: {"rgba(212,185,140,0.80)" if _is_dark else "rgba(40,100,60,0.75)"} !important;
     font-weight: 700 !important;
     font-size: 0.93rem !important;
     letter-spacing: 0.06em !important;
@@ -1064,8 +1149,16 @@ div[data-testid="stMetric"]::before {{
 }}
 
 /* ── Radio & other form elements ────────────────────────────────── */
-[data-testid="stRadio"] label span {{
-    color: {"#d0c4a8" if _is_dark else "#1e3a28"} !important;
+[data-testid="stRadio"] label span,
+[data-testid="stRadio"] label p {{
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
+    font-weight: 500 !important;
+}}
+
+/* "Day Type" radio group label */
+[data-testid="stRadio"] > label,
+[data-testid="stRadio"] > div > label {{
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
 }}
 
 /* ── Alerts / info boxes ────────────────────────────────────────── */
@@ -1073,11 +1166,11 @@ div[data-testid="stAlert"] {{
     background: {"rgba(60,55,48,0.92)" if _is_dark else "rgba(246,244,232,0.85)"} !important;
     border-color: {"rgba(148,137,121,0.30)" if _is_dark else "rgba(80,170,110,0.4)"} !important;
     backdrop-filter: blur(10px) !important;
-    color: {"#e0d0b8" if _is_dark else "#1e3a28"} !important;
+    color: {"#f0e0c8" if _is_dark else "#12200e"} !important;
 }}
 
 div[data-testid="stAlert"] p, div[data-testid="stAlert"] span {{
-    color: {"#e8d8c0" if _is_dark else "#1e3a28"} !important;
+    color: {"#faf0d8" if _is_dark else "#12200e"} !important;
 }}
 
 /* ── Buttons — text color ───────────────────────────────────────── */
@@ -1118,7 +1211,7 @@ div[data-baseweb="input"] {{
 
 .stTextInput input::placeholder,
 div[data-baseweb="input"] input::placeholder {{
-    color: {"rgba(180,160,130,0.55)" if _is_dark else "rgba(40,100,55,0.45)"} !important;
+    color: {"rgba(200,185,155,0.75)" if _is_dark else "rgba(40,100,55,0.65)"} !important;
 }}
 
 .stTextInput input:focus,
@@ -1142,17 +1235,95 @@ div[data-testid="tooltipHoverTarget"] + div,
 div[role="tooltip"],
 .stTooltipContent {{
     background: {"#2a2f3a" if _is_dark else "#ffffff"} !important;
-    color: {"#e0d0b8" if _is_dark else "#1a1308"} !important;
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
     border: {"1px solid rgba(212,175,114,0.30)" if _is_dark else "1px solid rgba(0,0,0,0.10)"} !important;
     border-radius: 8px !important;
     box-shadow: {"0 4px 20px rgba(0,0,0,0.6)" if _is_dark else "0 4px 16px rgba(0,0,0,0.12)"} !important;
 }}
 div[role="tooltip"] *, [data-testid="stTooltipContent"] * {{
-    color: {"#e0d0b8" if _is_dark else "#1a1308"} !important;
+    color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
 }}
 </style>
 """
-st.markdown(THEME_CSS, unsafe_allow_html=True)
+st.markdown(THEME_CSS.replace("<style>", "<div hidden><style>").replace("</style>", "</style></div>"), unsafe_allow_html=True)
+
+# ── Font color synced to theme toggle ─────────────────────────────────────────
+_font_color = "#ffffff" if _is_dark else "#000000"
+st.markdown(f"""
+<style>
+.stApp p,
+.stApp label,
+.stApp span,
+.stApp .stCaption,
+.stApp .stMarkdown,
+.stApp [data-testid="stCaptionContainer"] p,
+.stApp [data-testid="stMarkdownContainer"] p,
+.stApp [data-testid="stMarkdownContainer"] span,
+.stApp [data-testid="stMarkdownContainer"] strong,
+.stApp [data-testid="stMarkdownContainer"] b,
+.stApp [data-testid="stRadio"] label,
+.stApp [data-testid="stRadio"] span,
+.stApp [data-testid="stTabs"] [role="tab"],
+.stApp h1, .stApp h2, .stApp h3,
+.stApp h4, .stApp h5, .stApp h6 {{
+    color: {_font_color} !important;
+}}
+.stApp .stTextArea textarea::placeholder {{
+    color: {"rgba(255,255,255,0.50)" if _is_dark else "rgba(0,0,0,0.40)"} !important;
+}}
+.stApp .stTextArea textarea {{
+    background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
+    border: {"1px solid #7a746a" if _is_dark else "1px solid rgba(60,140,80,0.35)"} !important;
+}}
+.stApp div[data-testid="stMetric"] {{
+    background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
+}}
+.stApp .ee-session-col {{
+    background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
+}}
+.stApp .ee-col-header {{
+    color: {"#ffffff" if _is_dark else "#000000"} !important;
+}}
+.stApp .ee-col-header.work {{
+    color: {"#60a5fa" if _is_dark else "#000000"} !important;
+}}
+.stApp .ee-col-header.brk {{
+    color: {"#d4af72" if _is_dark else "#000000"} !important;
+}}
+[data-testid="stTabs"] [role="tablist"] {{
+    gap: 4px !important;
+    border-bottom: {"1px solid rgba(212,175,114,0.20)" if _is_dark else "1px solid rgba(60,140,80,0.18)"} !important;
+    background: transparent !important;
+}}
+[data-testid="stTabs"] [role="tab"] {{
+    color: {"rgba(180,155,110,0.45)" if _is_dark else "rgba(60,120,75,0.40)"} !important;
+    font-weight: 700 !important;
+    font-size: 0.93rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    padding: 0.55rem 1.4rem !important;
+    border-radius: 8px 8px 0 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: color 0.20s ease, background 0.20s ease, box-shadow 0.20s ease !important;
+}}
+[data-testid="stTabs"] [role="tab"]:hover {{
+    color: {"rgba(212,175,114,0.90)" if _is_dark else "rgba(30,100,50,0.90)"} !important;
+    background: {"rgba(212,175,114,0.06)" if _is_dark else "rgba(60,140,80,0.06)"} !important;
+    box-shadow: none !important;
+    border: none !important;
+}}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
+    color: {"#e8c96a" if _is_dark else "#0f3d1f"} !important;
+    background: {"rgba(212,175,114,0.09)" if _is_dark else "rgba(60,140,80,0.08)"} !important;
+    border: none !important;
+    border-bottom: {"2px solid #d4af72" if _is_dark else "2px solid #14532d"} !important;
+    box-shadow: {"inset 0 2px 8px rgba(212,175,114,0.10)" if _is_dark else "inset 0 2px 8px rgba(60,140,80,0.08)"} !important;
+    text-shadow: {"0 0 16px rgba(212,175,114,0.45)" if _is_dark else "none"} !important;
+}}
+</style>
+""", unsafe_allow_html=True)
 
 # ── Signup helpers ────────────────────────────────────────────────────────────
 
@@ -1205,73 +1376,276 @@ def _set_user_param(name: str, email: str) -> None:
     st.query_params["u"] = encoded
 
 
+def _inject_signup_css(dark: bool) -> None:
+    """Inject signup page CSS via hidden-div trick — reliable in all Streamlit versions."""
+    gold     = '#d4af72'
+    # Dark: deep navy | Light: warm cream
+    right_bg = '#1a1e26'                        if dark else '#F6F4E8'
+    left_bg  = 'linear-gradient(150deg,#1c3f28 0%,#0d1f14 55%,#172f20 100%)' if dark else 'linear-gradient(150deg,#1a3d24 0%,#0f2e18 55%,#163322 100%)'
+    lbl_c    = 'rgba(230,215,185,0.90)'         if dark else 'rgba(20,60,30,0.85)'
+    div_c    = 'rgba(212,175,114,0.22)'         if dark else 'rgba(30,100,55,0.22)'
+    inp_bg   = '#252b35'                        if dark else '#ffffff'
+    inp_bdr  = 'rgba(212,175,114,0.25)'         if dark else 'rgba(30,120,60,0.35)'
+    inp_txt  = '#ffffff'                        if dark else '#12200e'
+    inp_ph   = 'rgba(200,185,155,0.70)'         if dark else 'rgba(40,100,55,0.65)'
+    bdr_c    = 'rgba(212,175,114,0.18)'         if dark else 'rgba(30,100,55,0.18)'
+    shad     = ('0 28px 80px rgba(0,0,0,0.65),0 6px 22px rgba(0,0,0,0.40)' if dark else
+                '0 20px 64px rgba(15,60,30,0.14),0 4px 16px rgba(15,60,30,0.07)')
+    txt_c    = 'rgba(230,215,185,0.90)'         if dark else 'rgba(20,60,30,0.85)'
+    left_txt = '#f5e6c8'                        if dark else '#f5e6c8'
+
+    css = f"""
+    div[data-testid="stHorizontalBlock"] {{
+        gap: 0 !important;
+        align-items: stretch !important;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: {shad};
+        border: 1px solid {bdr_c};
+        margin: 0.5rem 0 1.5rem;
+    }}
+    .ee-hdr-toggle div[data-testid="stHorizontalBlock"] {{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    .ee-hdr-toggle div[data-testid="stColumn"] {{
+        background: transparent !important;
+        padding: 0 !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {{
+        padding: 0 !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] {{
+        gap: 0 !important;
+        padding: 0 !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child {{
+        background: {left_bg} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child p,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child span,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child div,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child [data-testid="stMarkdownContainer"] *,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child [data-testid="stVerticalBlock"] * {{
+        color: {left_txt} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child {{
+        background: {right_bg} !important;
+        padding: 2.6rem 2.2rem 2.2rem !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child label {{
+        color: {lbl_c} !important;
+        font-size: 0.79rem !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input {{
+        background: {inp_bg} !important;
+        border: 1px solid {inp_bdr} !important;
+        color: {inp_txt} !important;
+        -webkit-text-fill-color: {inp_txt} !important;
+        border-radius: 10px !important;
+        caret-color: {inp_txt} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input:-webkit-autofill,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input:-webkit-autofill:hover,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input:-webkit-autofill:focus {{
+        -webkit-text-fill-color: {inp_txt} !important;
+        -webkit-box-shadow: 0 0 0px 1000px {inp_bg} inset !important;
+        box-shadow: 0 0 0px 1000px {inp_bg} inset !important;
+        caret-color: {inp_txt} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input:focus {{
+        border-color: {gold} !important;
+        box-shadow: 0 0 0 2px rgba(212,175,114,0.18) !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child [data-testid="stForm"] {{
+        border: 1px solid {div_c} !important;
+        border-radius: 12px !important;
+        padding: 0.75rem !important;
+        background: transparent !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child p,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child span,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child div,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child h1,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child h2,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child h3 {{
+        color: {txt_c} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child [data-testid="stMarkdownContainer"] * {{
+        color: {txt_c} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child * {{
+        color: inherit !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input::placeholder {{
+        color: {inp_ph} !important;
+        -webkit-text-fill-color: {inp_ph} !important;
+        opacity: 1 !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input::-webkit-input-placeholder {{
+        color: {inp_ph} !important;
+        -webkit-text-fill-color: {inp_ph} !important;
+    }}
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child .stButton > button,
+    div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child .stFormSubmitButton > button {{
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }}
+    """
+    st.markdown(f'<div hidden><style>{css}</style></div>', unsafe_allow_html=True)
+
+
 def render_signup_page() -> None:
     """Full-page signup gate rendered before the main app."""
     _tm = st.session_state.theme_mode
-    _is_dark = _tm == "dark"
+    D   = (_tm == "dark")
 
-    # Toggle button (top-right)
-    _, _tog = st.columns([10, 2])
+    # ── Colours ───────────────────────────────────────────────────────────────
+    gold      = '#d4af72'
+    title_c   = '#f5e6c8'                          # left panel always dark green bg
+    sub_c     = 'rgba(220,200,162,0.75)'            # left panel subtitle
+    chip_bg   = 'rgba(255,255,255,0.08)'            # left panel chips (dark bg)
+    chip_bdr  = 'rgba(212,175,114,0.22)'
+    chip_txt  = 'rgba(235,215,180,0.90)'
+    lbl_c     = 'rgba(230,215,185,0.90)'  if D else 'rgba(20,60,30,0.80)'
+    div_c     = 'rgba(212,175,114,0.22)'  if D else 'rgba(30,100,55,0.22)'
+    div_txt   = 'rgba(210,190,145,0.70)'  if D else 'rgba(20,80,40,0.55)'
+    foot_c    = 'rgba(210,195,165,0.65)'  if D else 'rgba(20,80,40,0.50)'
+    form_ttl  = '#ffffff'                 if D else '#12200e'
+    eye_c     = '#c9a855'                 if D else '#1a6035'
+
+    # Inject CSS
+    _inject_signup_css(D)
+
+    # ── Max-width wrapper (limits signup card horizontal spread) ─────────────
+    st.markdown(
+        '<div style="max-width:780px;margin:0 auto;">',
+        unsafe_allow_html=True,
+    )
+
+    # ── Toggle button ─────────────────────────────────────────────────────────
+    _name_col, _tog = st.columns([10, 2])
+    with _name_col:
+        st.markdown(
+            f'<div style="display:flex;align-items:center;justify-content:center;'
+            f'padding:0.5rem 0;margin-top:25px;">'
+            f'<div style="text-align:center;">'
+            f'<div style="display:flex;align-items:center;justify-content:center;gap:0.9rem;">'
+            f'<span style="font-size:2.4rem;line-height:1;'
+            f'filter:drop-shadow(0 2px 8px rgba(0,0,0,0.55));">⏱️</span>'
+            f'<span style="font-family:Georgia,serif;font-size:2.6rem;font-weight:700;'
+            f'color:#f5e6c8;letter-spacing:0.04em;line-height:1;'
+            f'text-shadow:0 2px 20px rgba(0,0,0,0.7),0 1px 6px rgba(0,0,0,0.45),'
+            f'0 0 40px rgba(212,175,114,0.15);">'
+            f'EntryExit Insight</span>'
+            f'</div>'
+            f'<div style="margin:0 auto;margin-top:7px;width:70%;height:4.5px;'
+            f'background:linear-gradient(90deg,transparent,#d4af72,rgba(212,175,114,0.5),transparent);'
+            f'border-radius:2px;"></div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
     with _tog:
-        toggle_label = "☀️  Light" if _is_dark else "🌙  Dark"
-        if st.button(toggle_label, key="btn_signup_theme_toggle"):
-            st.session_state.theme_mode = "light" if _is_dark else "dark"
+        tgl = "\u2600\ufe0f  Light" if D else "\U0001f319  Dark"
+        if st.button(tgl, key="btn_signup_theme_toggle"):
+            st.session_state.theme_mode = "light" if D else "dark"
             st.rerun()
 
-    # Centred card layout
-    _, card_col, _ = st.columns([1, 2, 1])
-    with card_col:
+    # ── Chips HTML ────────────────────────────────────────────────────────────
+    chips_data = [
+        ("\U0001f516", "Sign up once \u00b7 bookmark your link, no re-signup again"),
+        ("\U0001f512",  "No passwords  ·  No OTP  ·  No spam \u2014 ever"),
+        ("\u23f1\ufe0f",  "Every second matters \u2014 we track them all"),
+        ("\U0001f4c5", "Full Day & Half Day shift support"),
+        ("\U0001f464", "Team Member & Team Leader dashboards"),
+        ("\u2705",     "Instant logout eligibility status"),
+        ("\u26a1",     "Real-time biometric punch tracking"),
+    ]
+    cs = (f'display:flex;align-items:center;gap:0.65rem;padding:0.80rem 0.85rem;'
+          f'border-radius:10px;background:{chip_bg};border:1px solid {chip_bdr};margin-bottom:0.70rem;')
+    chips_html = "".join(
+        f'<div style="{cs}">'
+        f'<span style="font-size:0.92rem;flex-shrink:0;">{ic}</span>'
+        f'<span style="font-size:0.79rem !important;color:{chip_txt} !important;">{tx}</span>'
+        f'</div>'
+        for ic, tx in chips_data
+    )
+
+    # ── Two columns ───────────────────────────────────────────────────────────
+    lc, rc = st.columns(2)
+
+    # LEFT ────────────────────────────────────────────────────────────────────
+    with lc:
         st.markdown(
-            f"""
-            <div style="
-                background: {'rgba(38,43,52,0.92)' if _is_dark else 'rgba(240,252,245,0.92)'};
-                border: {'1px solid rgba(212,175,114,0.30)' if _is_dark else '1px solid rgba(80,170,110,0.45)'};
-                border-radius: 20px;
-                padding: 2.2rem 2rem 1.8rem;
-                box-shadow: {'0 16px 48px rgba(0,0,0,0.55)' if _is_dark else '0 12px 36px rgba(60,140,80,0.14)'};
-                backdrop-filter: blur(14px);
-                margin-top: 3rem;
-                text-align: center;
-            ">
-                <div style="font-size:2.8rem; margin-bottom:0.4rem;">⏱️</div>
-                <h2 style="
-                    font-family: Georgia, serif;
-                    font-size: 1.7rem;
-                    color: {'#f0e8d8' if _is_dark else '#12200e'} !important;
-                    margin-bottom: 0.2rem;
-                ">EntryExit Insight</h2>
-                <p style="
-                    font-size: 0.88rem;
-                    color: {'rgba(200,185,155,0.75)' if _is_dark else 'rgba(30,80,45,0.65)'} !important;
-                    margin-bottom: 0;
-                ">Register once to start tracking your time</p>
-            </div>
-            """,
+            # Outer wrapper — fills full column height via padding
+            f'<div style="padding:3.2rem 3rem 3rem;height:100%;box-sizing:border-box;'
+            f'position:relative;overflow:hidden;">'
+
+            # Ambient glow
+            f'<div style="position:absolute;inset:0;pointer-events:none;'
+            f'background:radial-gradient(ellipse at 25% 15%,rgba(212,175,114,0.12) 0%,transparent 55%),'
+            f'radial-gradient(ellipse at 78% 85%,rgba(34,200,100,0.05) 0%,transparent 50%);"></div>'
+
+            # Badge
+            f'<div style="display:inline-flex;align-items:center;gap:0.4rem;'
+            f'background:rgba(212,175,114,0.12);border:1px solid rgba(212,175,114,0.28);'
+            f'border-radius:100px;padding:0.25rem 0.75rem;font-size:0.66rem !important;'
+            f'font-weight:700 !important;letter-spacing:0.13em;text-transform:uppercase;'
+            f'color:{gold} !important;width:fit-content;margin-bottom:1.3rem;">'
+            f'&#10022;&nbsp; Your Time Intelligence Hub</div>'
+
+            # Gold bar
+            f'<div style="width:300px;height:2px;'
+            f'background:linear-gradient(90deg,{gold},transparent);'
+            f'border-radius:5px;margin-bottom:1.3rem;"></div>'
+
+            + chips_html +
+            f'</div>',
             unsafe_allow_html=True,
         )
 
-        st.markdown("<div style='margin-top:1.4rem'></div>", unsafe_allow_html=True)
+    # RIGHT ───────────────────────────────────────────────────────────────────
+    with rc:
+        # Header
+        st.markdown(
+            f'<div style="margin-bottom:0.9rem;">'
+            f'<div style="font-size:0.67rem !important;font-weight:700 !important;'
+            f'letter-spacing:0.15em;text-transform:uppercase;color:{eye_c} !important;'
+            f'<div style="font-family:Georgia,serif !important;font-size:1.8rem !important;'
+            f'font-weight:600 !important;color:{form_ttl} !important;'
+            f'line-height:1.15 !important;margin-bottom:0.9rem !important;">'
+            f'Let\'s set up your profile.</div>'
+            f'<div style="font-size:0.81rem !important;color:{lbl_c} !important;">'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
         if "signup_error" not in st.session_state:
             st.session_state.signup_error = ""
 
-        # Returning user fast path — just email
+        # Already registered
+        st.markdown(
+            f'<p style="font-size:0.67rem !important;font-weight:700 !important;'
+            f'letter-spacing:0.13em;text-transform:uppercase;'
+            f'color:{lbl_c} !important;margin:0.5rem 0 0.2rem !important;">Already registered</p>',
+            unsafe_allow_html=True,
+        )
         with st.form(key="returning_form", clear_on_submit=False):
-            ret_email = st.text_input(
-                "Already registered? Enter your email to continue",
-                placeholder="e.g. ravi.kumar@company.com",
-                key="_ret_email",
-            )
-            ret_submitted = st.form_submit_button(
-                "Continue →", use_container_width=True
-            )
+            ret_email = st.text_input("Email address", placeholder="ravi.kumar@company.com", key="_ret_email")
+            ret_submitted = st.form_submit_button("Continue \u2192", use_container_width=True)
 
         if ret_submitted:
             ret_email_clean = (ret_email or "").strip().lower()
             if not ret_email_clean or "@" not in ret_email_clean:
                 st.warning("Please enter a valid email.")
             else:
-                with st.spinner("Checking…"):
+                with st.spinner("Verifying\u2026"):
                     existing = check_existing_signup(ret_email_clean)
                 if existing:
                     st.session_state.signup_done = True
@@ -1281,64 +1655,83 @@ def render_signup_page() -> None:
                 else:
                     st.warning("Email not found. Please register below.")
 
-        st.markdown("<div style='text-align:center;opacity:0.4;font-size:0.8rem;margin:0.5rem 0'>── or register ──</div>", unsafe_allow_html=True)
-
-        # New user registration
-        with st.form(key="signup_form", clear_on_submit=False):
-            full_name = st.text_input(
-                "Full Name",
-                placeholder="e.g. Ravi Kumar",
-                key="_signup_name",
-            )
-            email = st.text_input(
-                "Official Email",
-                placeholder="e.g. ravi.kumar@company.com",
-                key="_signup_email",
-            )
-            submitted = st.form_submit_button(
-                "Register & Continue →", use_container_width=True
-            )
-
-        if submitted:
-            name_clean = (full_name or "").strip()
-            email_clean = (email or "").strip().lower()
-
-            if not name_clean:
-                st.warning("Please enter your full name.")
-            elif not email_clean:
-                st.warning("Please enter your official email.")
-            elif "@" not in email_clean or "." not in email_clean.split("@")[-1]:
-                st.warning("That doesn't look like a valid email address.")
-            else:
-                with st.spinner("Checking registration…"):
-                    existing = check_existing_signup(email_clean)
-                if existing:
-                    st.session_state.signup_done = True
-                    st.session_state.signup_user_name = existing.get("Full Name", name_clean)
-                    st.rerun()
-                else:
-                    with st.spinner("Registering…"):
-                        ok = submit_signup_to_sheets(name_clean, email_clean)
-                    if ok:
-                        st.session_state.signup_done = True
-                        st.session_state.signup_user_name = name_clean
-                        _set_user_param(name_clean, email_clean)
-                        st.rerun()
-
+        # Divider
         st.markdown(
-            f"""
-            <p style="
-                text-align:center;
-                font-size:0.76rem;
-                color: {'rgba(180,160,130,0.50)' if _is_dark else 'rgba(40,100,55,0.45)'} !important;
-                margin-top:0.8rem;
-            ">
-                Your details are only used to identify registered users.<br>
-                No passwords/OTP are required.
-            </p>
-            """,
+            f'<div style="display:flex;align-items:center;gap:0.6rem;margin:0.6rem 0;">'
+            f'<div style="flex:1;height:1px;background:{div_c};"></div>'
+            f'<span style="font-size:0.68rem !important;letter-spacing:0.10em;'
+            f'color:{div_txt} !important;white-space:nowrap;">New here? Register below</span>'
+            f'<div style="flex:1;height:1px;background:{div_c};"></div>'
+            f'</div>',
             unsafe_allow_html=True,
         )
+
+        # New registration
+        # Guard: hide the form entirely while a registration is in progress
+        if "signup_submitting" not in st.session_state:
+            st.session_state.signup_submitting = False
+
+        st.markdown(
+            f'<p style="font-size:0.67rem !important;font-weight:700 !important;'
+            f'letter-spacing:0.13em;text-transform:uppercase;'
+            f'color:{lbl_c} !important;padding:0 10px; !important;">Create your profile</p>',
+            unsafe_allow_html=True,
+        )
+
+        if st.session_state.signup_submitting:
+            # Show only a spinner — no form rendered underneath
+            st.spinner("Registering\u2026")
+        else:
+            with st.form(key="signup_form", clear_on_submit=False):
+                full_name = st.text_input("Full Name", placeholder="Ravi Kumar", key="_signup_name")
+                email     = st.text_input("Official Email", placeholder="ravi.kumar@company.com", key="_signup_email")
+                submitted = st.form_submit_button("Register & Continue \u2192", use_container_width=True)
+
+            if submitted:
+                name_clean  = (full_name or "").strip()
+                email_clean = (email or "").strip().lower()
+                if not name_clean:
+                    st.warning("Please enter your full name.")
+                elif not email_clean:
+                    st.warning("Please enter your official email.")
+                elif "@" not in email_clean or "." not in email_clean.split("@")[-1]:
+                    st.warning("That doesn\'t look like a valid email address.")
+                else:
+                    with st.spinner("Checking\u2026"):
+                        existing = check_existing_signup(email_clean)
+                    if existing:
+                        st.session_state.signup_done = True
+                        st.session_state.signup_user_name = existing.get("Full Name", name_clean)
+                        st.rerun()
+                    else:
+                        st.session_state.signup_submitting = True
+                        st.session_state._pending_name  = name_clean
+                        st.session_state._pending_email = email_clean
+                        st.rerun()
+
+        # Process pending registration (runs on the rerun after flag is set)
+        if st.session_state.signup_submitting:
+            name_clean  = st.session_state.get("_pending_name", "")
+            email_clean = st.session_state.get("_pending_email", "")
+            with st.spinner("Registering\u2026"):
+                ok = submit_signup_to_sheets(name_clean, email_clean)
+            st.session_state.signup_submitting = False
+            if ok:
+                st.session_state.signup_done = True
+                st.session_state.signup_user_name = name_clean
+                _set_user_param(name_clean, email_clean)
+            st.rerun()
+
+        st.markdown(
+            f'<p style="font-size:0.70rem !important;color:{foot_c} !important;'
+            f'text-align:center;margin-top:0.7rem !important;line-height:2.65;">'
+            f'Your details are only used to identify registered users.<br>',
+            unsafe_allow_html=True,
+        )
+
+    # Close max-width wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 # ── Signup gate — block app until registered ──────────────────────────────────
@@ -1366,13 +1759,21 @@ st.markdown(
 )
 
 # ── Header row: icon | title | spacer | theme toggle ──────────────────────────
-hdr_icon, hdr_title, hdr_spacer, hdr_toggle = st.columns([1, 9, 2, 2], vertical_alignment="center")
+hdr_icon, hdr_title, hdr_spacer, hdr_toggle = st.columns([1.1, 8.4, 1.3, 2], vertical_alignment="center")
 
 with hdr_icon:
     st.markdown(CLOCK_SVG, unsafe_allow_html=True)
 
 with hdr_title:
-    st.title("EntryExit Insight")
+    # Use st.components to bypass Streamlit's HTML sanitizer entirely
+    import streamlit.components.v1 as _components
+    _components.html(
+        '<div style="font-family:Georgia,serif;font-size:1.85rem;font-weight:700;'
+        'color:#f5e6c8;margin:0;letter-spacing:-0.01em;line-height:1.0;'
+        'text-shadow:0 2px 8px rgba(0,0,0,0.8);">'
+        'EntryExit Insight</div>',
+        height=50,
+    )
 
 with hdr_toggle:
     toggle_label = "☀️  Light" if _is_dark else "🌙  Dark"
