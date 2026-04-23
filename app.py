@@ -45,7 +45,11 @@ if "signup_done" not in st.session_state:
             _qp_name, _qp_email = _decoded.split("||", 1)
             if _qp_email and "@" in _qp_email:
                 st.session_state.signup_done      = True
-                st.session_state.signup_user_name = _qp_name
+                # If name is missing in URL param, derive it from the email prefix
+                if _qp_name.strip():
+                    st.session_state.signup_user_name = _qp_name.strip()
+                else:
+                    st.session_state.signup_user_name = _qp_email.split("@")[0].replace(".", " ").title()
     if "signup_done" not in st.session_state:
         st.session_state.signup_done = False
 
@@ -97,12 +101,13 @@ st.markdown(
     .stApp [data-testid="stMarkdownContainer"] div,
     .stApp [data-testid="stMarkdownContainer"] strong,
     .stApp [data-testid="stMarkdownContainer"] b,
-    .stApp [data-testid="stCaptionContainer"] p,
     .stApp [data-testid="stRadio"] label,
     .stApp [data-testid="stRadio"] span,
     .stApp [data-testid="stTabs"] [role="tab"] {
         color: #000000 !important;
     }
+
+    /* Caption colour is intentionally NOT set here — controlled by theme-aware font-sync block */
 
     div[data-testid="stMetric"] {
         background: linear-gradient(
@@ -505,9 +510,17 @@ def format_human(total_seconds: int) -> str:
 
 
 def get_first_name() -> str:
-    """Return only the first word of the stored signup name."""
+    """Return only the first word of the stored signup name.
+    If an email was accidentally stored, derive a display name from the prefix."""
     full = st.session_state.get("signup_user_name", "")
-    return full.strip().split()[0] if full.strip() else ""
+    stripped = full.strip()
+    if not stripped:
+        return ""
+    # If it looks like an email, derive name from the prefix
+    if "@" in stripped:
+        prefix = stripped.split("@")[0].replace(".", " ").replace("_", " ")
+        return prefix.split()[0].capitalize() if prefix.strip() else ""
+    return stripped.split()[0].capitalize()
 
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -562,11 +575,33 @@ def render_logout_eligibility_status(
     st.markdown('<div style="margin-top: 1rem;"></div>', unsafe_allow_html=True)
     if now < deadline:
         at = format_logout_at_display(first_entry, deadline)
-        st.info(f"🚀 You Need to Punch Out At :- **{at}**")
+        st.info(f"🎯 Skip the break and log out at: :- **{at}**")
     else:
-        congrats = f"🎉 Target Completed, {_uname}! You’re Free to Go!!" if _uname else "🎉 Target Completed! You’re Free to Go!!"
+        # Fallback: if first name empty, try full stored name
+        _display = _uname or st.session_state.get("signup_user_name", "").strip().split()[0].capitalize() if st.session_state.get("signup_user_name", "").strip() else ""
+        name_part = f", <span style='color:#86efac;font-weight:800;letter-spacing:0.02em;'>{_display}</span>" if _display else ""
+        name_txt = f", {_uname}" if _uname else ""
         st.markdown(
-            f'<div class="entryexit-hooray-banner">{congrats}</div>',
+            f'''<div style="
+                background: linear-gradient(135deg, #14532d 0%, #166534 40%, #15803d 80%, #16a34a 100%);
+                padding: 18px 24px;
+                border-radius: 14px;
+                border: 1px solid rgba(74,222,128,0.45);
+                font-weight: 700;
+                font-size: 1.13rem;
+                text-align: center;
+                box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset,
+                            0 12px 36px rgba(22,163,74,0.35),
+                            0 4px 12px rgba(0,0,0,0.3);
+                position: relative;
+                overflow: hidden;
+                margin-bottom: 1.2rem;
+            ">
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,transparent 55%);border-radius:14px;pointer-events:none;"></div>
+            <p style="margin:0;padding:0;color:#ffffff;-webkit-text-fill-color:#ffffff;text-shadow:0 7px 4px rgba(0,0,0,0.4);letter-spacing:0.015em;">
+                🎉 Target Completed<span style="color:#86efac;-webkit-text-fill-color:#86efac;font-weight:900;">{name_txt}</span>! You're Free to Log out anytime · no restrictions!!
+            </p>
+            </div>''',
             unsafe_allow_html=True,
         )
 
@@ -666,11 +701,22 @@ def render_team_member_dashboard(
     deadline = now + dt.timedelta(seconds=remaining_work)
     remaining_break = max(MEMBER_BREAK_TARGET - total_break, 0)
 
-    st.caption(
-        f"👤 Team Member · {day_type} · "
-        f"Clocked in at {first_entry.strftime('%I:%M %p').lstrip('0')} on {first_entry.strftime('%d %b %Y')} · "
-        f"Earliest logout at {format_logout_at_display(first_entry, deadline)}"
+    st.markdown(
+        f'<div class="ee-info-pill" style="'
+        f'font-size:0.80rem;letter-spacing:0.03em;'
+        f'padding:0.45rem 0.85rem;border-radius:8px;margin-bottom:0.2rem;'
+        f'background:rgba(212,175,114,0.10);'
+        f'border:1px solid rgba(212,175,114,0.22);'
+        f'display:inline-block;">'
+        f'👤&nbsp; <b>Team Member</b>&ensp;·&ensp;{day_type}'
+        f'&ensp;·&ensp;Clocked in at&nbsp;<b>{first_entry.strftime("%I:%M %p").lstrip("0")}</b>'
+        f'&nbsp;on&nbsp;{first_entry.strftime("%d %b %Y")}'
+        f'&ensp;·&ensp;Earliest logout&nbsp;<b>{format_logout_at_display(first_entry, deadline)}</b>'
+        f'</div>',
+        unsafe_allow_html=True,
     )
+
+    render_logout_eligibility_status(first_entry, deadline, now)
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Work Time", format_clock(total_work))
@@ -685,8 +731,6 @@ def render_team_member_dashboard(
             st.session_state.member_session_panel_open = not st.session_state.member_session_panel_open
         if st.session_state.member_session_panel_open:
             render_session_panel(result)
-
-    render_logout_eligibility_status(first_entry, deadline, now)
 
 
 def render_team_leader_dashboard(
@@ -704,11 +748,22 @@ def render_team_leader_dashboard(
     deadline = now + dt.timedelta(seconds=remaining_work)
     remaining_break = max(MEMBER_BREAK_TARGET - total_break, 0)
 
-    st.caption(
-        f"👤 Team Leader · {day_type} · "
-        f"Clocked in at {first_entry.strftime('%I:%M %p').lstrip('0')} on {first_entry.strftime('%d %b %Y')} · "
-        f"Earliest logout at {format_logout_at_display(first_entry, deadline)}"
+    st.markdown(
+        f'<div class="ee-info-pill" style="'
+        f'font-size:0.80rem;letter-spacing:0.03em;'
+        f'padding:0.45rem 0.85rem;border-radius:8px;margin-bottom:0.2rem;'
+        f'background:rgba(212,175,114,0.10);'
+        f'border:1px solid rgba(212,175,114,0.22);'
+        f'display:inline-block;">'
+        f'👑&nbsp; <b>Team Leader</b>&ensp;·&ensp;{day_type}'
+        f'&ensp;·&ensp;Clocked in at&nbsp;<b>{first_entry.strftime("%I:%M %p").lstrip("0")}</b>'
+        f'&nbsp;on&nbsp;{first_entry.strftime("%d %b %Y")}'
+        f'&ensp;·&ensp;Earliest logout&nbsp;<b>{format_logout_at_display(first_entry, deadline)}</b>'
+        f'</div>',
+        unsafe_allow_html=True,
     )
+
+    render_logout_eligibility_status(first_entry, deadline, now)
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Work (login) Time", format_clock(total_work))
@@ -723,8 +778,6 @@ def render_team_leader_dashboard(
             st.session_state.leader_session_panel_open = not st.session_state.leader_session_panel_open
         if st.session_state.leader_session_panel_open:
             render_session_panel(result)
-
-    render_logout_eligibility_status(first_entry, deadline, now)
 
 
 # ── Parsing ────────────────────────────────────────────────────────────────────
@@ -962,9 +1015,9 @@ _is_dark = _tm == "dark"
 # ── Botanical SVG wallpaper patterns ─────────────────────────────────────────
 # Dark: deep indigo/violet leaves (like the reference image)
 # Light: soft sage/mint botanical illustration
-DARK_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%23605B51%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%233a3428%7D.lb%7Bfill%3A%232e2a22%7D.lc%7Bfill%3A%2346403a%7D.v%7Bstroke%3A%236b5f48%3Bstroke-width%3A0.8%3Bfill%3Anone%3Bopacity%3A0.55%7D.v2%7Bstroke%3A%238a7a60%3Bstroke-width%3A0.5%3Bfill%3Anone%3Bopacity%3A0.35%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%235a5040%22%20stroke-width%3D%220.6%22%20opacity%3D%220.5%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.60%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.68%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
+DARK_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%23605B51%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%233a3428%3Bstroke%3A%23d4af72%3Bstroke-width%3A1.0%3Bstroke-opacity%3A0.58%7D.lb%7Bfill%3A%232e2a22%3Bstroke%3A%23d4af72%3Bstroke-width%3A1.0%3Bstroke-opacity%3A0.52%7D.lc%7Bfill%3A%2346403a%3Bstroke%3A%23d4af72%3Bstroke-width%3A1.0%3Bstroke-opacity%3A0.55%7D.v%7Bstroke%3A%23c9a84c%3Bstroke-width%3A0.9%3Bfill%3Anone%3Bopacity%3A0.65%7D.v2%7Bstroke%3A%23b8922a%3Bstroke-width%3A0.55%3Bfill%3Anone%3Bopacity%3A0.48%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%235a5040%22%20stroke-width%3D%220.6%22%20opacity%3D%220.5%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.60%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.68%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.82%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.70%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.75%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.78%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.65%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.80%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.72%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.58%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.56%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
 
-LIGHT_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%23F6F4E8%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%236abf8a%7D.lb%7Bfill%3A%2386c9a0%7D.lc%7Bfill%3A%234caf78%7D.v%7Bstroke%3A%232d8a58%3Bstroke-width%3A0.8%3Bfill%3Anone%3Bopacity%3A0.38%7D.v2%7Bstroke%3A%233aaa6a%3Bstroke-width%3A0.5%3Bfill%3Anone%3Bopacity%3A0.26%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%233a9060%22%20stroke-width%3D%220.6%22%20opacity%3D%220.26%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.31%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.35%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
+LIGHT_BG_SVG = """url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22600%22%3E%0A%3Crect%20width%3D%22600%22%20height%3D%22600%22%20fill%3D%22%23F6F4E8%22%2F%3E%0A%3Cstyle%3E.la%7Bfill%3A%236abf8a%3Bstroke%3A%23c9a030%3Bstroke-width%3A0.85%3Bstroke-opacity%3A0.50%7D.lb%7Bfill%3A%2386c9a0%3Bstroke%3A%23c9a030%3Bstroke-width%3A0.85%3Bstroke-opacity%3A0.45%7D.lc%7Bfill%3A%234caf78%3Bstroke%3A%23c9a030%3Bstroke-width%3A0.85%3Bstroke-opacity%3A0.48%7D.v%7Bstroke%3A%23a07820%3Bstroke-width%3A0.85%3Bfill%3Anone%3Bopacity%3A0.42%7D.v2%7Bstroke%3A%238a6818%3Bstroke-width%3A0.55%3Bfill%3Anone%3Bopacity%3A0.32%7D%3C%2Fstyle%3E%0A%3Cg%20transform%3D%22translate%28120%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20fill%3D%22none%22%20stroke%3D%22%233a9060%22%20stroke-width%3D%220.6%22%20opacity%3D%220.26%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M40%2C-35%20C46%2C-44%2055%2C-52%2064%2C-57%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M15%2C-12%20C20%2C-24%2028%2C-36%2038%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%2882%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M18%2C-14%20C25%2C-28%2038%2C-42%2055%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28148%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M22%2C-20%20C30%2C-34%2045%2C-50%2062%2C-60%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M12%2C-10%20C16%2C-22%2024%2C-34%2036%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28480%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-18%20C-30%2C-34%20-46%2C-50%20-62%2C-58%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-38%2C-36%20C-44%2C-46%20-54%2C-56%20-64%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-12%2C-10%20C-18%2C-24%20-28%2C-36%20-40%2C-44%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28510%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-18%2C-14%20C-26%2C-26%20-40%2C-40%20-55%2C-48%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28448%2C145%29%20rotate%2822%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-6%2C-34%20-36%2C-58%20-54%2C-60%20C-68%2C-62%20-78%2C-50%20-70%2C-28%20C-60%2C-4%20-30%2C14%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.31%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-18%2C-28%20-44%2C-48%20-70%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C440%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-48%2C-44%20C-56%2C-54%20-66%2C-64%20-76%2C-70%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-15%2C-14%20C-20%2C-28%20-30%2C-44%20-44%2C-54%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C492%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C28%2C-34%2044%2C-52%2062%2C-62%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M10%2C-10%20C14%2C-22%2022%2C-34%2034%2C-42%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28238%2C488%29%20rotate%28-32%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-44%20-44%2C-72%20-64%2C-74%20C-80%2C-76%20-92%2C-62%20-82%2C-36%20C-70%2C-8%20-38%2C18%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.35%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-36%20-54%2C-58%20-82%2C-36%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-20%2C-16%20C-28%2C-30%20-42%2C-46%20-58%2C-55%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C128%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3Cpath%20d%3D%22M-14%2C-12%20C-20%2C-26%20-30%2C-40%20-44%2C-50%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C90%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C98%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28720%2C170%29%20rotate%28-42%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C12%2C-55%2052%2C-85%2072%2C-88%20C90%2C-90%20105%2C-75%2095%2C-45%20C82%2C-10%2045%2C18%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C30%2C-44%2065%2C-68%2095%2C-45%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M20%2C-18%20C32%2C-36%2050%2C-50%2070%2C-56%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28682%2C128%29%20rotate%28-20%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C8%2C-40%2038%2C-68%2060%2C-70%20C76%2C-71%2088%2C-58%2080%2C-32%20C70%2C-5%2035%2C14%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.36%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-34%2050%2C-55%2080%2C-32%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28748%2C230%29%20rotate%28-58%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-48%2045%2C-76%2068%2C-78%20C88%2C-80%20100%2C-65%2090%2C-38%20C78%2C-8%2042%2C20%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.39%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C25%2C-40%2058%2C-62%2090%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-120%2C195%29%20rotate%2838%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-10%2C-52%20-48%2C-82%20-70%2C-84%20C-88%2C-86%20-102%2C-70%20-92%2C-42%20C-80%2C-10%20-44%2C20%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.41%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-22%2C-42%20-60%2C-65%20-92%2C-42%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28-90%2C255%29%20rotate%2854%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-38%20-40%2C-64%20-60%2C-66%20C-76%2C-68%20-86%2C-54%20-78%2C-30%20C-68%2C-4%20-36%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.34%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-32%20-50%2C-52%20-78%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28295%2C-160%29%20rotate%28-8%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-14%2C-58%20-56%2C-88%20-82%2C-90%20C-104%2C-92%20-118%2C-74%20-106%2C-44%20C-92%2C-10%20-50%2C24%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.42%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-30%2C-48%20-70%2C-72%20-106%2C-44%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-25%2C-22%20C-36%2C-40%20-54%2C-58%20-72%2C-68%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28340%2C-108%29%20rotate%2818%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-50%2046%2C-78%2068%2C-80%20C86%2C-82%20100%2C-66%2088%2C-38%20C76%2C-8%2040%2C22%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C22%2C-42%2058%2C-64%2088%2C-38%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28300%2C728%29%20rotate%2810%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-12%2C-52%20-50%2C-80%20-74%2C-82%20C-94%2C-84%20-108%2C-68%20-96%2C-40%20C-82%2C-8%20-44%2C22%200%2C0%20Z%22%20class%3D%22la%22%20opacity%3D%220.37%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-28%2C-44%20-64%2C-66%20-96%2C-40%22%20class%3D%22v%22%2F%3E%3Cpath%20d%3D%22M-24%2C-20%20C-34%2C-38%20-52%2C-56%20-70%2C-66%22%20class%3D%22v2%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28258%2C690%29%20rotate%28-14%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C-8%2C-36%20-40%2C-62%20-60%2C-64%20C-76%2C-66%20-86%2C-52%20-76%2C-28%20C-66%2C-4%20-34%2C16%200%2C0%20Z%22%20class%3D%22lb%22%20opacity%3D%220.30%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C-20%2C-30%20-48%2C-50%20-76%2C-28%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3Cg%20transform%3D%22translate%28348%2C698%29%20rotate%2826%29%22%3E%3Cpath%20d%3D%22M0%2C0%20C10%2C-38%2042%2C-64%2062%2C-66%20C78%2C-68%2088%2C-54%2080%2C-30%20C70%2C-5%2036%2C16%200%2C0%20Z%22%20class%3D%22lc%22%20opacity%3D%220.29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20C20%2C-32%2050%2C-52%2080%2C-30%22%20class%3D%22v%22%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E")"""
 
 THEME_CSS = f"""
 <style>
@@ -1010,7 +1063,7 @@ h1, h2, h3, h4, h5, h6 {{
 
 /* General body text — broad but high-specificity */
 p, span, div, label, .stMarkdown,
-.stCaption, [data-testid="stCaptionContainer"] {{
+.stCaption {{
     color: {"#d8ccb8" if _is_dark else "#1e3a28"} !important;
 }}
 
@@ -1026,10 +1079,15 @@ p, span, div, label, .stMarkdown,
     color: {"#f0e8d8" if _is_dark else "#12200e"} !important;
 }}
 
-/* Caption text */
+/* Caption text — solid black/white, always wins */
+[data-testid="stCaptionContainer"],
 [data-testid="stCaptionContainer"] p,
-[data-testid="stCaptionContainer"] span {{
-    color: {"#d4c4a8" if _is_dark else "#12200e"} !important;
+[data-testid="stCaptionContainer"] span,
+[data-testid="stCaptionContainer"] strong,
+[data-testid="stCaptionContainer"] b,
+[data-testid="stCaptionContainer"] * {{
+    color: {"#ffffff" if _is_dark else "#000000"} !important;
+    font-size: 14px !important;
 }}
 
 /* Bold/strong text in markdown */
@@ -1229,7 +1287,27 @@ div[data-baseweb="input"]:focus-within {{
     display: none !important;
 }}
 
-/* ── Tooltip ─────────────────────────────────────────────────────── */
+/* ── Tooltip icon ────────────────────────────────────────────────── */
+div[data-testid="tooltipHoverTarget"] {{
+    filter: {"invert(1) brightness(2)" if _is_dark else "none"} !important;
+    opacity: 1 !important;
+}}
+div[data-testid="tooltipHoverTarget"] > div,
+div[data-testid="tooltipHoverTarget"] > div > button,
+div[data-testid="tooltipHoverTarget"] > div > button > div,
+div[data-testid="tooltipHoverTarget"] > div > button svg,
+div[data-testid="tooltipHoverTarget"] > div > button svg path {{
+    filter: {"invert(1) brightness(2)" if _is_dark else "none"} !important;
+    fill: {"#ffffff" if _is_dark else "currentColor"} !important;
+    color: {"#ffffff" if _is_dark else "currentColor"} !important;
+    opacity: 1 !important;
+}}
+[data-testid="stRadio"] [data-testid="tooltipHoverTarget"] svg {{
+    filter: {"invert(1) brightness(2)" if _is_dark else "none"} !important;
+    opacity: 1 !important;
+}}
+
+/* ── Tooltip popup ───────────────────────────────────────────────── */
 div[data-testid="tooltipHoverTarget"] + div,
 [data-testid="stTooltipContent"],
 div[role="tooltip"],
@@ -1251,52 +1329,75 @@ st.markdown(THEME_CSS.replace("<style>", "<div hidden><style>").replace("</style
 _font_color = "#ffffff" if _is_dark else "#000000"
 st.markdown(f"""
 <style>
-.stApp p,
-.stApp label,
-.stApp span,
-.stApp .stCaption,
-.stApp .stMarkdown,
-.stApp [data-testid="stCaptionContainer"] p,
-.stApp [data-testid="stMarkdownContainer"] p,
-.stApp [data-testid="stMarkdownContainer"] span,
-.stApp [data-testid="stMarkdownContainer"] strong,
-.stApp [data-testid="stMarkdownContainer"] b,
-.stApp [data-testid="stRadio"] label,
-.stApp [data-testid="stRadio"] span,
-.stApp [data-testid="stTabs"] [role="tab"],
-.stApp h1, .stApp h2, .stApp h3,
-.stApp h4, .stApp h5, .stApp h6 {{
+
+/* ── Universal text colour ──────────────────────────────────────── */
+.stApp,
+.stApp *:not(button):not(.entryexit-hooray-banner):not(.entryexit-hooray-banner *):not([style*='#14532d']):not([style*='#14532d'] *) {{
     color: {_font_color} !important;
 }}
-.stApp .stTextArea textarea::placeholder {{
-    color: {"rgba(255,255,255,0.50)" if _is_dark else "rgba(0,0,0,0.40)"} !important;
+
+/* ── Preserve button text ───────────────────────────────────────── */
+.stButton > button,
+.stButton > button *,
+.stFormSubmitButton > button,
+.stFormSubmitButton > button * {{
+    color: #000000 !important;
 }}
-.stApp .stTextArea textarea {{
-    background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
-    border: {"1px solid #7a746a" if _is_dark else "1px solid rgba(60,140,80,0.35)"} !important;
+
+/* ── Metric cards ───────────────────────────────────────────────── */
+.stApp div[data-testid="stMetricLabel"] * {{
+    color: {_font_color} !important;
+    opacity: 0.75;
+}}
+.stApp div[data-testid="stMetricValue"] * {{
+    color: {_font_color} !important;
+    opacity: 1;
 }}
 .stApp div[data-testid="stMetric"] {{
     background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
 }}
+
+/* ── Session panel ──────────────────────────────────────────────── */
 .stApp .ee-session-col {{
     background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
 }}
-.stApp .ee-col-header {{
-    color: {"#ffffff" if _is_dark else "#000000"} !important;
+.stApp .ee-col-header,
+.stApp .ee-col-header * {{
+    color: {_font_color} !important;
 }}
-.stApp .ee-col-header.work {{
-    color: {"#60a5fa" if _is_dark else "#000000"} !important;
+.stApp .ee-row-label,
+.stApp .ee-row-range,
+.stApp .ee-row-dur {{
+    color: {_font_color} !important;
 }}
-.stApp .ee-col-header.brk {{
-    color: {"#d4af72" if _is_dark else "#000000"} !important;
+.stApp .ee-row-dur.work {{ color: {"#60a5fa" if _is_dark else "#000000"} !important; }}
+.stApp .ee-row-dur.brk  {{ color: {"#d4af72" if _is_dark else "#000000"} !important; }}
+
+/* ── Textarea ───────────────────────────────────────────────────── */
+.stApp .stTextArea textarea {{
+    color: {_font_color} !important;
+    background: {"#605B51" if _is_dark else "#F6F4E8"} !important;
+    border: {"1px solid #7a746a" if _is_dark else "1px solid rgba(60,140,80,0.35)"} !important;
 }}
+.stApp .stTextArea textarea::placeholder {{
+    color: {"rgba(255,255,255,0.45)" if _is_dark else "rgba(0,0,0,0.38)"} !important;
+}}
+
+/* ── Alerts ─────────────────────────────────────────────────────── */
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span,
+div[data-testid="stAlert"] * {{
+    color: {_font_color} !important;
+}}
+
+/* ── Tabs ───────────────────────────────────────────────────────── */
 [data-testid="stTabs"] [role="tablist"] {{
     gap: 4px !important;
     border-bottom: {"1px solid rgba(212,175,114,0.20)" if _is_dark else "1px solid rgba(60,140,80,0.18)"} !important;
     background: transparent !important;
 }}
 [data-testid="stTabs"] [role="tab"] {{
-    color: {"rgba(180,155,110,0.45)" if _is_dark else "rgba(60,120,75,0.40)"} !important;
+    color: {"rgba(255,255,255,0.45)" if _is_dark else "rgba(0,0,0,0.40)"} !important;
     font-weight: 700 !important;
     font-size: 0.93rem !important;
     letter-spacing: 0.06em !important;
@@ -1306,22 +1407,42 @@ st.markdown(f"""
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    transition: color 0.20s ease, background 0.20s ease, box-shadow 0.20s ease !important;
+    transition: color 0.20s ease, background 0.20s ease !important;
 }}
 [data-testid="stTabs"] [role="tab"]:hover {{
-    color: {"rgba(212,175,114,0.90)" if _is_dark else "rgba(30,100,50,0.90)"} !important;
-    background: {"rgba(212,175,114,0.06)" if _is_dark else "rgba(60,140,80,0.06)"} !important;
+    color: {"rgba(255,255,255,0.85)" if _is_dark else "rgba(0,0,0,0.80)"} !important;
+    background: {"rgba(255,255,255,0.06)" if _is_dark else "rgba(0,0,0,0.05)"} !important;
     box-shadow: none !important;
     border: none !important;
 }}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
-    color: {"#e8c96a" if _is_dark else "#0f3d1f"} !important;
-    background: {"rgba(212,175,114,0.09)" if _is_dark else "rgba(60,140,80,0.08)"} !important;
+    color: {"#ffffff" if _is_dark else "#000000"} !important;
+    background: {"rgba(255,255,255,0.08)" if _is_dark else "rgba(0,0,0,0.06)"} !important;
     border: none !important;
     border-bottom: {"2px solid #d4af72" if _is_dark else "2px solid #14532d"} !important;
-    box-shadow: {"inset 0 2px 8px rgba(212,175,114,0.10)" if _is_dark else "inset 0 2px 8px rgba(60,140,80,0.08)"} !important;
-    text-shadow: {"0 0 16px rgba(212,175,114,0.45)" if _is_dark else "none"} !important;
+    box-shadow: {"inset 0 2px 8px rgba(255,255,255,0.06)" if _is_dark else "inset 0 2px 8px rgba(0,0,0,0.05)"} !important;
+    text-shadow: none !important;
 }}
+
+/* ── Green banner — always white ───────────────────────────────── */
+.stApp .entryexit-hooray-banner,
+.stApp .entryexit-hooray-banner *,
+[data-testid="stMarkdownContainer"] .entryexit-hooray-banner,
+[data-testid="stMarkdownContainer"] .entryexit-hooray-banner * {{
+    color: #ffffff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}}
+
+/* ── Info pill ──────────────────────────────────────────────────── */ ──────────────────────────────────────────────────── */
+.ee-info-pill {{
+    color: {_font_color} !important;
+    font-weight: 500 !important;
+}}
+.ee-info-pill b {{
+    color: {_font_color} !important;
+    font-weight: 700 !important;
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1392,7 +1513,7 @@ def _inject_signup_css(dark: bool) -> None:
     shad     = ('0 28px 80px rgba(0,0,0,0.65),0 6px 22px rgba(0,0,0,0.40)' if dark else
                 '0 20px 64px rgba(15,60,30,0.14),0 4px 16px rgba(15,60,30,0.07)')
     txt_c    = 'rgba(230,215,185,0.90)'         if dark else 'rgba(20,60,30,0.85)'
-    left_txt = '#f5e6c8'                        if dark else '#f5e6c8'
+    left_txt = '#ffffff'                        if dark else '#ffffff'
 
     css = f"""
     div[data-testid="stHorizontalBlock"] {{
@@ -1432,7 +1553,8 @@ def _inject_signup_css(dark: bool) -> None:
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child div,
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child [data-testid="stMarkdownContainer"] *,
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child [data-testid="stVerticalBlock"] * {{
-        color: {left_txt} !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child {{
         background: {right_bg} !important;
@@ -1480,7 +1602,8 @@ def _inject_signup_css(dark: bool) -> None:
         color: {txt_c} !important;
     }}
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:first-child * {{
-        color: inherit !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
     div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:last-child input::placeholder {{
         color: {inp_ph} !important;
@@ -1507,11 +1630,11 @@ def render_signup_page() -> None:
 
     # ── Colours ───────────────────────────────────────────────────────────────
     gold      = '#d4af72'
-    title_c   = '#f5e6c8'                          # left panel always dark green bg
+    title_c   = '#ffffff'                           # left panel always dark green bg
     sub_c     = 'rgba(220,200,162,0.75)'            # left panel subtitle
     chip_bg   = 'rgba(255,255,255,0.08)'            # left panel chips (dark bg)
     chip_bdr  = 'rgba(212,175,114,0.22)'
-    chip_txt  = 'rgba(235,215,180,0.90)'
+    chip_txt  = '#ffffff'
     lbl_c     = 'rgba(230,215,185,0.90)'  if D else 'rgba(20,60,30,0.80)'
     div_c     = 'rgba(212,175,114,0.22)'  if D else 'rgba(30,100,55,0.22)'
     div_txt   = 'rgba(210,190,145,0.70)'  if D else 'rgba(20,80,40,0.55)'
@@ -1539,7 +1662,7 @@ def render_signup_page() -> None:
             f'<span style="font-size:2.4rem;line-height:1;'
             f'filter:drop-shadow(0 2px 8px rgba(0,0,0,0.55));">⏱️</span>'
             f'<span style="font-family:Georgia,serif;font-size:2.6rem;font-weight:700;'
-            f'color:#f5e6c8;letter-spacing:0.04em;line-height:1;'
+            f'color:#ffffff;letter-spacing:0.04em;line-height:1;'
             f'text-shadow:0 2px 20px rgba(0,0,0,0.7),0 1px 6px rgba(0,0,0,0.45),'
             f'0 0 40px rgba(212,175,114,0.15);">'
             f'EntryExit Insight</span>'
@@ -1767,7 +1890,7 @@ with hdr_icon:
 with hdr_title:
     st.markdown(
         '<div style="font-family:Georgia,serif;font-size:1.85rem;font-weight:700;'
-        'color:#f5e6c8;margin:0;letter-spacing:-0.01em;line-height:1.0;'
+        'color:#ffffff;margin:0;letter-spacing:-0.01em;line-height:1.0;'
         'text-shadow:0 2px 8px rgba(0,0,0,0.8);">'
         'EntryExit Insight</div>',
         unsafe_allow_html=True,
