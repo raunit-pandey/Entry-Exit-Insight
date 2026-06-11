@@ -599,7 +599,7 @@ def render_logout_eligibility_status(
             ">
             <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,transparent 55%);border-radius:14px;pointer-events:none;"></div>
             <p style="margin:0;padding:0;color:#ffffff;-webkit-text-fill-color:#ffffff;text-shadow:0 7px 4px rgba(0,0,0,0.4);letter-spacing:0.015em;">
-                🎉 Target Completed<span style="color:#86efac;-webkit-text-fill-color:#86efac;font-weight:900;">{name_txt}</span>! You're Free to Log out anytime · no restrictions!!
+                🎉 Target Completed<span style="color:#86efac;-webkit-text-fill-color:#86efac;font-weight:900;">{name_txt}</span>! You're Free to Log out anytime!!
             </p>
             </div>''',
             unsafe_allow_html=True,
