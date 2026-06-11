@@ -575,7 +575,7 @@ def render_logout_eligibility_status(
     st.markdown('<div style="margin-top: 1rem;"></div>', unsafe_allow_html=True)
     if now < deadline:
         at = format_logout_at_display(first_entry, deadline)
-        st.info(f"🎯 Skip the break and log out at: :- **{at}**")
+        st.info(f"🎯 Earliest Logout at :- **{at}**")
     else:
         # Fallback: if first name empty, try full stored name
         _display = _uname or st.session_state.get("signup_user_name", "").strip().split()[0].capitalize() if st.session_state.get("signup_user_name", "").strip() else ""
